@@ -8,14 +8,15 @@
    "visual": { "layers": [], "camera": { "lng": -73.6, "lat": -9.5, "zoom": 6.1, "pitch": 35 } },
    "numbers": [
     { "value": "~2,700 km", "label": "length of the Ucayali River, between the high Andes and the low hills to the east",
-      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 2.1", "page": "p.4" } },
-    { "value": "496,459", "label": "inhabitants of Ucayali (INEI 2022, as cited by the paper)",
-      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 2.1", "page": "p.4" } },
+      "source": { "kind": "study", "citation": "Amazon Waters Alliance (2022), as cited in Cooley et al. (2024)", "page": "p.4" } },
+    { "value": "496,459", "label": "inhabitants of Ucayali",
+      "source": { "kind": "study", "citation": "INEI (2022), as cited in Cooley et al. (2024)", "page": "p.4" } },
     { "value": "≈ 105,000 km²", "label": "department area, from the INEI boundary",
       "source": { "kind": "app", "method": "equal-area measurement of inputs/ucayali.shp" } }
    ],
    "sources": [
-    "Climate (≈1,560 mm yr⁻¹, 26.3 °C, 114 rainy days) and population: Cooley et al. (2024), Ecology and Evolution 14:e70116, sect. 2.1, p.4."
+    "Climate (≈1,560 mm yr⁻¹, 26.3 °C, 114 rainy days): NOAA (2022), as cited in Cooley et al. (2024), Ecology and Evolution 14:e70116, sect. 2.1, p.4.",
+    "River length: Amazon Waters Alliance (2022); population and languages: INEI (2022, 2007) — all as cited in Cooley et al. (2024), p.4."
    ]
   },
   {
@@ -39,7 +40,7 @@
   {
    "id": "forest_loss",
    "title": "Twenty-four years of loss",
-   "text": "Since the 2000 baseline, Ucayali has lost about 6,054 km² of humid Amazon forest — concentrated along the roads and rivers of Padre Abad and Coronel Portillo, while Purús, in the remote east, lost almost nothing. About 91,159 km² of forest still stood in 2024. The regional government's own strategy flags 11.35 % of Ucayali's intact forests as at risk.",
+   "text": "Since the 2000 baseline, Ucayali has lost about 6,054 km² of humid Amazon forest — concentrated along the roads and rivers of Padre Abad and Coronel Portillo, while Purús, in the remote east, lost almost nothing. About 91,159 km² of forest still stood in 2024. The regional government's own strategy flags 11.35 % of Ucayali's intact forests as at risk (Gobierno Regional de Ucayali 2022, as cited in Cooley et al. 2024, p.18).",
    "visual": { "layers": ["forest_loss"], "camera": { "lng": -75.1, "lat": -8.85, "zoom": 8.6, "pitch": 0 },
      "chart": "forest_loss_classes",
      "pending_note": "The year-by-year loss map and annual series arrive when GEOBOSQUES' annual loss raster (with the year field) is added to the pipeline." },
@@ -49,7 +50,7 @@
     { "value": "2,154 vs 30 km²", "label": "loss in Padre Abad vs Purús — the whole gradient of the department in two provinces",
       "source": { "kind": "app", "method": "GEOBOSQUES raster by province (this app's analysis)" } },
     { "value": "11.35 %", "label": "of Ucayali's intact forests (1,059,312 ha) are in at-risk areas, per the regional low-emissions strategy",
-      "source": { "kind": "study", "citation": "Gobierno Regional de Ucayali (2022), as cited in Cooley et al. (2024), sect. 4.2", "page": "p.18" } }
+      "source": { "kind": "study", "citation": "Gobierno Regional de Ucayali (2022), as cited in Cooley et al. (2024)", "page": "p.18" } }
    ],
    "sources": [
     "GEOBOSQUES (MINAM PNCBMCC + SERFOR/MIDAGRI), 'Mapa del Bosque Húmedo Amazónico Peruano 2000–2024'; loss integrates natural and anthropic losses (product metadata, PRECAUCIONES).",
@@ -138,7 +139,7 @@
    ],
    "sources": [
     "Inundated forests excluded: Cooley et al. (2024), sect. 2.1, p.4.",
-    "Sparse GEDI coverage in the western Amazon: sect. 4.3, p.19.",
+    "Sparse GEDI coverage in the western Amazon: Potapov et al. (2021), as cited in Cooley et al. (2024), sect. 4.3, p.19.",
     "Cacao mapped with women farmers of the Alianza Cacao Peru programme: sect. 2.3.3, p.11; the plots are not part of the public dataset."
    ]
   },
