@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common
-from common import log
+from common import check_encoding, log
 
 import numpy as np
 import rasterio
@@ -86,6 +86,7 @@ def main():
     out_labels = labels[WINDOW - 1:]
 
     enc = np.where(np.isfinite(spi), np.round(spi * 100), NODATA).astype("i2")
+    check_encoding("spi3.tif", spi, enc, 100)
     prof = dict(driver="GTiff", height=enc.shape[1], width=enc.shape[2], count=enc.shape[0],
                 dtype="int16", crs="EPSG:4326", transform=t, nodata=NODATA, tiled=True,
                 blockxsize=256, blockysize=256, compress="DEFLATE", predictor=2)
@@ -115,6 +116,7 @@ def main():
     qc = np.concatenate([qc_normal, qc_q0 * 100])
     qlabels = [f"normal_mm_{m:02d}" for m in range(1, 13)] + [f"q0_pct_{m:02d}" for m in range(1, 13)]
     qenc = np.where(np.isfinite(qc), np.round(qc * 10), NODATA).astype("i2")
+    check_encoding("spi3_qc.tif", qc, qenc, 10, nonneg=True)
     with rasterio.open(APPD / "spi3_qc.tif", "w", **{**prof, "count": 24}) as dst:
         dst.write(qenc)
         for i, lb in enumerate(qlabels, 1):

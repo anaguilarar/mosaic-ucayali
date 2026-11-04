@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import common
-from common import log
+from common import check_encoding, log
 
 import geopandas as gpd
 import numpy as np
@@ -76,8 +76,9 @@ def grid(da):
     return t, bool(lat[0] < lat[-1])
 
 
-def write_stack(path, arr3d, labels, transform, units, scale=10):
+def write_stack(path, arr3d, labels, transform, units, scale=10, nonneg=False):
     a = np.where(np.isfinite(arr3d), np.round(np.asarray(arr3d) * scale), NODATA).astype("i2")
+    check_encoding(Path(path).name, arr3d, a, scale, nonneg)
     prof = dict(driver="GTiff", height=a.shape[1], width=a.shape[2], count=a.shape[0], dtype="int16",
                 crs="EPSG:4326", transform=transform, nodata=NODATA, tiled=True,
                 blockxsize=256, blockysize=256, compress="DEFLATE", predictor=2)
@@ -99,8 +100,24 @@ def monthly_stack(url, var, how, out, force):
     mon = (m.sum(skipna=False) if how == "sum" else m.mean(skipna=False)).compute()
     arr = mon.values if not flip else mon.values[:, ::-1, :]
     labels = [f"{d:%Y-%m}" for d in pd.to_datetime(mon.time.values)]
-    write_stack(out, arr, labels, t, "mm/month" if how == "sum" else "degC")
+    write_stack(out, arr, labels, t, "mm/month" if how == "sum" else "degC", nonneg=(how == "sum"))
     common.record("25_climate", out)
+
+
+SCALES = {"precip": 1, "tmean": 10, "tmax": 10, "tmin": 10}   # stored value = real value x scale
+
+
+def write_float(path, arr3d, labels, transform, units):
+    a = np.asarray(arr3d, "f4")
+    prof = dict(driver="GTiff", height=a.shape[1], width=a.shape[2], count=a.shape[0], dtype="float32",
+                crs="EPSG:4326", transform=transform, nodata=float("nan"), tiled=True,
+                blockxsize=256, blockysize=256, compress="DEFLATE", predictor=3)
+    with rasterio.open(path, "w", **prof) as dst:
+        dst.write(a)
+        for i, lb in enumerate(labels, 1):
+            dst.set_band_description(i, lb)
+        dst.update_tags(units=units)
+    log.info("wrote %s: %d bands (float32)", Path(path).name, len(labels))
 
 
 def read_stack(path):
@@ -173,7 +190,8 @@ def main():
             "scale": 0.1, "nodata": NODATA, "normal": f"{NORMAL[0]}-{NORMAL[1]}",
             "months": {"start": plabels[0], "n_precip": len(plabels), "n_tmean": n},
             "seasons": {k: list(v) for k, v in SEASONS.items()},
-            "region": "Ucayali department", "ranges": {}, "years": {}, "normals_order": []}
+            "region": "Ucayali department", "ranges": {}, "years": {}, "normals_order": [],
+            "scales": dict(SCALES), "normals_encoding": "float32, nodata NaN, real units"}
 
     stacks = {"precip": (precip, plabels, "sum", "mm"),
               "tmean": (tmean, tlabels[:n], "mean", "degC"),
@@ -183,8 +201,10 @@ def main():
     for var, (mon, labels, how, units) in stacks.items():
         for season, smonths in SEASONS.items():
             arr, years = yearly(mon, labels, how, smonths)
+            # precipitation TOTALS in whole mm: annual and wet-season totals exceed int16 at x10
+            # (3,276.7 mm); temperatures keep x10 (0.1 degC). The per-variable scale is in app_meta.
             write_stack(APPD / f"{var}_{season}.tif", arr, [str(y) for y in years], t,
-                        f"{units}/{season}")
+                        f"{units}/{season}", scale=SCALES[var], nonneg=(var == "precip"))
             meta["years"][f"{var}_{season}"] = years
             meta["ranges"][f"{var}_{season}"] = [round(v, 1) for v in p2p98(arr)]
             if var in ("precip", "tmean"):
@@ -197,10 +217,12 @@ def main():
                     meta["ranges"][f"precip_{season}_anom"] = [round(v, 1) for v in p2p98(anom)]
                 else:
                     meta["ranges"][f"tmean_{season}_anom"] = [round(v, 2) for v in p2p98(arr - normals[-1])]
-    write_stack(APPD / "normals.tif", np.stack(normals), meta["normals_order"], t, "per-variable units")
+    write_float(APPD / "normals.tif", np.stack(normals), meta["normals_order"], t,
+                "real units per band (mm totals, degC means); float32, nodata NaN")
 
     for name, mon in {"precip": precip, "tmean": tmean}.items():
         a = np.where(np.isfinite(mon), np.round(mon * 10), NODATA).astype("<i2")
+        check_encoding(f"{name}_cells.bin", mon, a, 10, nonneg=(name == "precip"))
         flat = np.ascontiguousarray(np.moveaxis(a, 0, -1))
         (APPD / f"{name}_cells.bin").write_bytes(flat.tobytes())
         log.info("%s_cells.bin: %.1f MB", name, flat.nbytes / 1e6)

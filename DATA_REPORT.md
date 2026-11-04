@@ -148,6 +148,21 @@ the papers.
   three months each within one calendar year. (Monthly normals, mm: Jan 273, Feb 258, Mar 273,
   Apr 196, May 132, Jun 78, Jul 61, Aug 69, Sep 113, Oct 191, Nov 246, Dec 260; Tmean ~28–30 °C
   year-round — rainfall alone defines the seasons. This app's analysis.)
+- **Climate storage encoding (fixed 2026-11-04).** Precipitation *totals* (annual, core wet,
+  core dry) are stored as int16 in **whole mm**; monthly precipitation and the per-cell series
+  as int16 ×10 (0.1 mm; monthly maximum 1,430.6 mm); temperatures as int16 ×10 (0.1 °C); SPI-3
+  as int16 ×100; the 1991–2020 normals as float32 in real units. The per-variable scale is in
+  `climate/app/app_meta.json` ("scales"). Before the fix, annual and wet-season totals were
+  stored ×10 in int16, which overflows above 3,276.7 mm: 18,851 cell-years of annual totals
+  (and 32 wet-season values, 411 normal cells) wrapped to negative values, so the wettest
+  western lobe showed as the driest patch on the annual and anomaly maps (e.g. −396 mm mean in
+  2025). The real annual maximum is 7,869 mm. **No published number changed**: the department
+  series, climatology, legend ranges, SPI-3 and the story figures were all computed from float
+  sums of the (unaffected) monthly stack — re-verified from the corrected stack: department
+  normal 2,150 mm, Coronel Portillo + Padre Abad 2,243 mm, 2024 = 1,686 mm (lowest of 45 years),
+  Jun–Aug 2024 SPI-3 −1.89 (3rd lowest). A write-time guard (`common.check_encoding`: no value at
+  the dtype limit, no negative precipitation, decoded max = float max) now stops the pipeline on
+  any lossy encoding, and `tests/climate_encoding_check.py` re-checks every stored file.
 - **Outside the department.** Every raster layer served for query (canopy 10 m COG) and every
   thematic tile set built from a bbox clip (GEOBOSQUES; MapBiomas when it lands) is masked to the
   department boundary (pixel centre inside; nodata outside) by `common.mask_to_department`. The

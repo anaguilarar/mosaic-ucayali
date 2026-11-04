@@ -182,6 +182,37 @@ def mbtiles_to_pmtiles(src: Path, dst: Path, maxzoom: int):
     log.info("wrote %s (%.1f MB)", dst, dst.stat().st_size / 1e6)
 
 
+# ----------------------------------------------------------------- encoding guard
+
+class EncodingError(SystemExit):
+    pass
+
+
+def check_encoding(name, arr3d, enc, scale, nonneg=False):
+    """Fail the step if an int16 encoding lost information: values at the dtype ceiling/floor
+    (other than nodata), negative values where the variable cannot be negative, or a decoded
+    maximum that differs from the float maximum by more than half a quantisation step.
+    (2026-11-04: annual precipitation x10 overflowed int16 above 3,276.7 mm and wrapped negative.)"""
+    import numpy as np
+    f = np.asarray(arr3d, "f8")
+    ok = np.isfinite(f)
+    e = enc[ok].astype("i8")
+    problems = []
+    lo, hi = np.iinfo("i2").min, np.iinfo("i2").max
+    if (np.abs(np.round(f[ok] * scale)) >= hi).any():
+        problems.append(f"{int((np.abs(np.round(f[ok] * scale)) >= hi).sum())} values beyond the int16 range "
+                        f"(|v|*{scale} >= {hi}); max |v| = {np.nanmax(np.abs(f)):.1f}")
+    if (e >= hi).any() or (e <= lo).any():
+        problems.append("encoded values at the int16 ceiling/floor")
+    if nonneg and (e < 0).any():
+        problems.append(f"{int((e < 0).sum())} negative encoded values in a non-negative variable")
+    if ok.any() and abs(e.max() / scale - f[ok].max()) > 0.5 / scale + 1e-6:
+        problems.append(f"decoded max {e.max() / scale:.2f} != float max {f[ok].max():.2f}")
+    if problems:
+        raise EncodingError(f"{name}: encoding check FAILED - " + "; ".join(problems))
+    log.info("%s: encoding check ok (scale x%s, decoded max %.1f)", name, scale, e.max() / scale)
+
+
 # ----------------------------------------------------------------- department clip
 
 def department_geometry(crs="EPSG:4326"):
