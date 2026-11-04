@@ -76,13 +76,20 @@ def run_month(client, concept, month, variables):
             return info
         w, s, e, n = common.bbox()
         start, stop = month_bounds(month)
+        kw = {"variables": variables} if variables else {}       # no `variables` key at all when spatial-only
         req = Request(collection=Collection(id=concept), spatial=BBox(w, s, e, n),
-                      temporal={"start": start, "stop": stop}, variables=variables)
+                      temporal={"start": start, "stop": stop}, **kw)
         if not req.is_valid():
             sys.exit(f"invalid Harmony request: {req.error_messages()}")
         try:
             job = client.submit(req)
         except Exception as err:
+            if "No matching granules" in str(err):           # e.g. GEDI's hibernation, ~Mar 2023-Apr 2024
+                info = {"month": month, "job": "none", "files": [], "mb": 0.0, "seconds": 0,
+                        "variables": bool(variables), "note": "no granules over the area this month"}
+                done.write_text(json.dumps(info, indent=1), encoding="utf-8")
+                log.info("%s: no granules over the area - recorded as empty", month)
+                return info
             if variables:
                 log.warning("%s: variable subset rejected (%s); retrying spatial-only", month, err)
                 return run_month(client, concept, month, None)
@@ -121,6 +128,14 @@ def main():
     months = [args.month] if args.month else (
         [g["pilot_month"]] if g.get("pilot_month") and common.AREA == "pilot"
         else list(month_range(start, end)))
+    # only months in which step 10 found granules over the area (skips GEDI's hibernation gap
+    # without submitting empty Harmony jobs)
+    found = {gr["begin"][:7] for gr in json.loads(search.read_text()).get("granules", [])}
+    if found and not args.month:
+        skipped = [m for m in months if m not in found]
+        months = [m for m in months if m in found]
+        if skipped:
+            log.info("skipping %d month(s) without granules: %s", len(skipped), ", ".join(skipped))
     if args.force:
         for m in months:
             j = common.WORK / "gedi" / "subsets" / m / "job.json"
