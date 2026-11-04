@@ -2,6 +2,7 @@
    Static: PMTiles + GeoJSON + JSON read from the data root (site/js/config.js dataUrl). No backend. */
 
 import * as stories from "./stories.js";
+import * as thematic from "./thematic.js";
 
 import { dataUrl, isWithheld } from "./config.js";
 import { split as splitLazy, setVisibility } from "./layers.js";
@@ -16,11 +17,23 @@ const closeFloating = (except) => {
 };
 const pmUrl = (f) => "pmtiles://" + new URL(dataUrl(f) + "?v=" + TILE_V, location.href).href;
 
-/* Thematic overlays: one active at a time (radio). Phase 1 ships the vegetation classes;
-   forest loss, land cover, canopy height and fires join in later phases. */
+/* Thematic overlays: one active at a time (radio). type "thematic" layers live in thematic.js
+   (per-year tiles, legends, click panels); vector overlays are handled here. */
 const OVERLAYS = [
   { id: "veg_classes", group: "Vegetation", title: "Vegetation classes", type: "vector",
     file: "vectors/veg_classes.geojson", regKey: "veg_classes", swatch: "#55a05f" },
+  { id: "canopy", group: "Vegetation", title: "Canopy height", type: "thematic",
+    regKey: "canopy", swatch: "#1f704a" },
+  { id: "landcover", group: "Land", title: "Land cover", type: "thematic",
+    regKey: "landcover", swatch: "#e49635" },
+  { id: "forest_loss", group: "Land", title: "Forest loss", type: "thematic",
+    regKey: "forest_loss", swatch: "#b2182b" },
+  { id: "fire", group: "Fire", title: "Active fires", type: "thematic",
+    regKey: "fire", swatch: "#e55064" },
+  { id: "burned_area", group: "Fire", title: "Burned area", type: "thematic",
+    regKey: "burned_area", swatch: "#782012" },
+  { id: "protected_areas", group: "Conservation", title: "Protected areas (ANP & ACR)", type: "vector",
+    file: "vectors/protected_areas.geojson", regKey: "protected_areas", swatch: "#2e86ab" },
 ];
 
 const $ = (s) => document.querySelector(s);
@@ -45,7 +58,7 @@ window.addEventListener("unhandledrejection", (e) => notice("Error: " + (e.reaso
                      "vectors/department.geojson", "vectors/department_mask.geojson",
                      "vectors/provinces.geojson", "vectors/districts.geojson",
                      "vectors/admin_labels.geojson",
-                     ...OVERLAYS.map((o) => o.file)];
+                     ...OVERLAYS.filter((o) => o.file).map((o) => o.file)];
   await Promise.all(probeList.map(async (f) => { have[f] = !isWithheld(f) && await exists(dataUrl(f)); }));
   state.have = have;
 
@@ -79,7 +92,7 @@ function notice(msg) {
 /* ---------------- layer rail ---------------- */
 function buildRail() {
   const rail = $("#rail");
-  const groups = new Map([["Base", []], ["Vegetation", []]]);
+  const groups = new Map([["Base", []], ["Vegetation", []], ["Land", []], ["Fire", []], ["Conservation", []]]);
   const toggle = (title, swatch, ids, on, extra) => {
     const b = railItem(title, swatch, "");
     b.setAttribute("aria-pressed", String(on));
@@ -103,7 +116,7 @@ function buildRail() {
   }
 
   for (const o of OVERLAYS) {
-    const ok = state.have[o.file];
+    const ok = o.type === "thematic" ? Boolean(state.registry[o.regKey]?.urls) : state.have[o.file];
     const item = railItem(o.title, o.swatch, ok ? "" : "not built");
     if (!ok) item.classList.add("unavailable");
     else item.addEventListener("click", () => setOverlay(state.overlay === o.id ? null : o.id));
@@ -141,20 +154,43 @@ async function setOverlay(id) {
   document.querySelectorAll(".rail .item[data-overlay]").forEach((b) => {
     b.setAttribute("aria-pressed", String(b.dataset.overlay === id));
   });
-  for (const o of OVERLAYS) {
+  for (const o of OVERLAYS.filter((x) => x.type === "vector")) {
     for (const lid of overlayLayerIds(o.id)) setVisibility(map, lid, o.id === id ? "visible" : "none");
   }
-  renderLegend(id);
+  thematic.deactivate();
+  const def = OVERLAYS.find((x) => x.id === id);
+  if (def?.type === "thematic") {
+    $("#legend").hidden = true;
+    await thematic.activate(id);          // thematic.js owns the legend while active
+  } else {
+    renderLegend(id);
+  }
   updateAttrib();
   $("#popover").hidden = true;
 }
 
-const overlayLayerIds = (id) => (id === "veg_classes" ? ["veg-fill", "veg-line"] : ["ov-" + id]);
+const overlayLayerIds = (id) => (id === "veg_classes" ? ["veg-fill", "veg-line"]
+  : id === "protected_areas" ? ["pa-fill", "pa-line"] : ["ov-" + id]);
 
 /* ---------------- legend + attribution ---------------- */
 function renderLegend(id) {
   const box = $("#legend");
   box.hidden = true;
+  if (id === "protected_areas") {
+    const reg = state.registry.protected_areas || {};
+    box.innerHTML = "";
+    box.append(el("h3", null, "Protected areas"));
+    for (const [c, lab] of [["#2e86ab", "ANP — national protected area"], ["#7fb069", "ACR — regional conservation area"]]) {
+      const row = el("div", "cat-row");
+      const sw = el("span", "swatch"); sw.style.background = c;
+      row.append(sw, document.createTextNode(lab));
+      box.append(row);
+    }
+    box.append(el("p", "src", "Click an area for its name, category and creation year · source: SERNANP"));
+    box.hidden = false;
+    updateAttrib();
+    return;
+  }
   if (id !== "veg_classes") { updateAttrib(); return; }
   const reg = state.registry.veg_classes;
   if (!reg?.classes) return;
@@ -176,7 +212,12 @@ function renderLegend(id) {
 }
 
 function updateAttrib() {
-  const names = { veg_classes: " · Cooley et al. (2024) vegetation typologies (CC0)" };
+  const names = { veg_classes: " · Cooley et al. (2024) vegetation typologies (CC0)",
+                  canopy: " · ETH canopy height 2020 (CC BY 4.0)",
+                  landcover: " · MapBiomas Perú C4 (CC BY 4.0)",
+                  forest_loss: " · GEOBOSQUES (MINAM/SERFOR)",
+                  fire: " · NASA FIRMS VIIRS", burned_area: " · MapBiomas fuego (CC BY 4.0)",
+                  protected_areas: " · SERNANP" };
   const extra = state.overlay ? (names[state.overlay] || "") : "";
   const ref = (state.placeNames ? " · © OpenStreetMap contributors" : "")
             + (state.admin ? " · IGN (ODC-By)" : "");
@@ -293,12 +334,24 @@ function initMap() {
   }
   layers.push({ id: "dim", type: "fill", source: "mask", paint: { "fill-color": "#1c232b", "fill-opacity": 0.28 } });
 
+  const th = thematic.layersFor(state.registry, pmUrl);   // per-year + static thematic tile layers
+  Object.assign(sources, th.sources);
+  layers.push(...th.layers);
+
   if (state.have["vectors/veg_classes.geojson"]) {
     sources.veg = { type: "geojson", data: dataUrl("vectors/veg_classes.geojson") };
     layers.push({ id: "veg-fill", type: "fill", source: "veg", layout: { visibility: "none" },
                   paint: { "fill-color": ["get", "color"], "fill-opacity": 0.72 } });
     layers.push({ id: "veg-line", type: "line", source: "veg", layout: { visibility: "none" },
                   paint: { "line-color": ["get", "color"], "line-width": 1.2 } });
+  }
+  if (state.have["vectors/protected_areas.geojson"]) {
+    sources.pa = { type: "geojson", data: dataUrl("vectors/protected_areas.geojson") };
+    const paColor = ["case", ["==", ["get", "kind"], "ACR (regional)"], "#7fb069", "#2e86ab"];
+    layers.push({ id: "pa-fill", type: "fill", source: "pa", layout: { visibility: "none" },
+                  paint: { "fill-color": paColor, "fill-opacity": 0.35 } });
+    layers.push({ id: "pa-line", type: "line", source: "pa", layout: { visibility: "none" },
+                  paint: { "line-color": paColor, "line-width": 1.8 } });
   }
   layers.push({ id: "department-line", type: "line", source: "department",
                 paint: { "line-color": "#0a0a0a", "line-width": 1.4 } });
@@ -323,6 +376,7 @@ function initMap() {
   map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
 
   map.on("load", async () => {
+    try { thematic.init(map); } catch (e) { notice("Thematic layers failed to start: " + e.message); }
     applyHash();
     if (map.setSky) {
       map.setSky({ "sky-color": "#c8d4de", "horizon-color": "#e7ebef", "fog-color": "#e7ebef",
@@ -335,9 +389,14 @@ function initMap() {
     }
   });
 
-  map.on("click", (e) => showPopover(e));
-  map.on("mouseenter", "veg-fill", () => (map.getCanvas().style.cursor = "pointer"));
-  map.on("mouseleave", "veg-fill", () => (map.getCanvas().style.cursor = ""));
+  map.on("click", (e) => {
+    if (thematic.isActive()) { thematic.onClick(e.lngLat); return; }
+    showPopover(e);
+  });
+  for (const lid of ["veg-fill", "pa-fill"]) {
+    map.on("mouseenter", lid, () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", lid, () => (map.getCanvas().style.cursor = ""));
+  }
 }
 
 /* shareable state: #layer=veg_classes&c=lng,lat,zoom,pitch */
@@ -366,7 +425,20 @@ async function showPopover(e) {
   }
   closeFloating("popover");
   let title = "Ucayali";
-  if (state.overlay === "veg_classes" && map.getLayer("veg-fill")) {
+  if (state.overlay === "protected_areas" && map.getLayer("pa-fill")) {
+    const hits = map.queryRenderedFeatures(e.point, { layers: ["pa-fill"] });
+    if (hits.length) {
+      const f = hits[0].properties;
+      title = f.name;
+      rows.push(`<div class="row"><span>Category</span><span>${f.category}</span></div>`,
+                `<div class="row"><span>Kind</span><span>${f.kind}</span></div>`,
+                `<div class="row"><span>Created</span><span>${f.year ?? "—"}${f.legal_doc ? " · " + f.legal_doc : ""}</span></div>`,
+                `<div class="row"><span>Legal area</span><span>${f.area_legal_ha ? Number(f.area_legal_ha).toLocaleString() + " ha" : "—"}</span></div>`);
+      rows.push(`<p class="meta">Source: SERNANP (boundaries simplified for display; not an official delimitation).</p>`);
+    } else {
+      rows.push(`<p class="meta">No protected area here.</p>`);
+    }
+  } else if (state.overlay === "veg_classes" && map.getLayer("veg-fill")) {
     const hits = map.queryRenderedFeatures(e.point, { layers: ["veg-fill"] });
     if (hits.length) {
       const f = hits[0].properties;
@@ -414,6 +486,15 @@ function buildAbout() {
     if (l.caveats) sec.append(el("p", "meta", l.caveats));
     body.append(sec);
   }
+  /* layers deliberately not hosted here */
+  const raisg = el("div", "chart-block");
+  raisg.append(el("h3", null, "Indigenous territories (not hosted here)"));
+  raisg.append(el("p", "meta",
+    'RAISG\'s Indigenous-territories data is not redistributed in this app: RAISG\'s use licence '
+    + 'requires unaltered data and non-profit use, and the layer includes territories of peoples in '
+    + 'isolation. View it on <a href="https://www.raisg.org/es/mapas/" target="_blank" '
+    + 'rel="noopener">RAISG\'s own map</a>.'));
+  body.append(raisg);
 }
 
 /* ---------------- ui wiring ---------------- */

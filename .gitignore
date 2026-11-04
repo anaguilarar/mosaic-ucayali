@@ -12,6 +12,7 @@ data/tiles/*.pmtiles
 !data/tiles/terrain.pmtiles
 !data/tiles/s2_rgb.pmtiles
 data/query/
+data/fire/
 *.tif
 *.h5
 *.parquet

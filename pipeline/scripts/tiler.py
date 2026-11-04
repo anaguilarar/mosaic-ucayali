@@ -123,11 +123,24 @@ def max_levels(merc_path: Path, minzoom: int, maxzoom: int, strip: int = 512) ->
     return levels
 
 
+def empty_tile(fmt: str) -> bytes:
+    """A fully transparent 256x256 tile. Written wherever the encoder returns None: MapLibre waits
+    forever on tiles that are inside a source's bounds but absent from the archive (the map's
+    'load' never fires over masked areas), and PMTiles deduplicates identical tiles, so a full
+    tile set costs roughly one tile plus directory entries."""
+    buf = io.BytesIO()
+    img = Image.new("RGBA", (TILE, TILE), (0, 0, 0, 0))
+    img.save(buf, "WEBP" if fmt == "webp" else "PNG", **({"quality": 50} if fmt == "webp" else {}))
+    return buf.getvalue()
+
+
 def cut_tiles(merc_path: Path, pm_out: Path, name: str, fmt: str, minzoom: int, maxzoom: int,
               encoder, resampling: Resampling, extra_meta=None, levels: dict[int, Path] | None = None):
     """Cut XYZ tiles from the mercator raster and write <pm_out>.pmtiles. With `levels` (from
-    max_levels), each zoom is read from its own pre-aggregated raster instead of the overviews."""
+    max_levels), each zoom is read from its own pre-aggregated raster instead of the overviews.
+    Every candidate tile is written (empty ones as one shared transparent tile, see empty_tile)."""
     mb = common.WORK / (pm_out.stem + ".mbtiles")
+    blank = empty_tile(fmt)
     with rasterio.open(merc_path) as src0:
         w, s, e, n = transform_bounds(MERC, "EPSG:4326", *src0.bounds)
     db = open_mbtiles(mb, name, fmt, minzoom, maxzoom, (w, s, e, n), extra_meta)
@@ -142,8 +155,8 @@ def cut_tiles(merc_path: Path, pm_out: Path, name: str, fmt: str, minzoom: int, 
                                 fill_value=src.nodata if src.nodata is not None else 0)
                 png = encoder(data)
                 total += 1
+                put_tile(db, z, t.x, t.y, png if png is not None else blank)
                 if png is not None:
-                    put_tile(db, z, t.x, t.y, png)
                     written += 1
         db.commit()
         log.info("%s z%d: %d/%d tiles", pm_out.stem, z, written, total)

@@ -182,6 +182,61 @@ def mbtiles_to_pmtiles(src: Path, dst: Path, maxzoom: int):
     log.info("wrote %s (%.1f MB)", dst, dst.stat().st_size / 1e6)
 
 
+# ----------------------------------------------------------------- zonal class areas
+
+def class_areas_km2(raster_path, zones, strip=1024, band=1):
+    """Per-zone, per-class-value areas (km²) of a categorical EPSG:4326 raster, strip-wise so the
+    raster is never whole in memory. `zones` = {zone_name: shapely geometry}. Pixel areas use a
+    cos(latitude) correction per row. Returns {zone: {value: km2}} (value 0 treated as nodata)."""
+    import numpy as np
+    import rasterio
+    from rasterio import features
+    out = {z: {} for z in zones}
+    with rasterio.open(raster_path) as src:
+        resx, resy = abs(src.transform.a), abs(src.transform.e)
+        for r0 in range(0, src.height, strip):
+            h = min(strip, src.height - r0)
+            win = rasterio.windows.Window(0, r0, src.width, h)
+            a = src.read(band, window=win)
+            t = src.window_transform(win)
+            lats = t.f + t.e * (np.arange(h) + 0.5)
+            px_km2 = (resx * 111.3195) * (resy * 111.3195) * np.cos(np.radians(lats))  # per row
+            for zname, geom in zones.items():
+                m = features.rasterize([(geom, 1)], out_shape=(h, src.width), transform=t,
+                                       fill=0, dtype="uint8").astype(bool)
+                if not m.any():
+                    continue
+                vals = a[m]
+                rows = np.nonzero(m)[0]
+                for v in np.unique(vals):
+                    if v == 0:
+                        continue
+                    sel = vals == v
+                    km2 = float(px_km2[rows[sel]].sum())
+                    out[zname][int(v)] = out[zname].get(int(v), 0.0) + km2
+    return {z: {k: round(v, 2) for k, v in d.items()} for z, d in out.items()}
+
+
+def download(url: str, dest: Path, timeout=1800) -> Path:
+    """Stream a file to the downloads cache (skipped when present); raises on HTTP errors."""
+    import requests
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists() and dest.stat().st_size > 0:
+        return dest
+    log.info("downloading %s", url)
+    with requests.get(url, stream=True, timeout=timeout,
+                      headers={"User-Agent": "MOSAIC-ucayali-pipeline/0.1 (CGIAR research; "
+                                             "github.com/anaguilarar/mosaic-ucayali)"}) as r:
+        r.raise_for_status()
+        tmp = dest.with_suffix(dest.suffix + ".part")
+        with open(tmp, "wb") as f:
+            for chunk in r.iter_content(1 << 20):
+                f.write(chunk)
+        tmp.replace(dest)
+    log.info("downloaded %s (%.1f MB)", dest.name, dest.stat().st_size / 1e6)
+    return dest
+
+
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "verify":
         sys.exit(1 if verify_manifest() else 0)

@@ -17,6 +17,12 @@ step "03 sentinel-2"      scripts/03_s2.py
 step "04 osm labels"      scripts/04_osm_labels.py
 step "05 cooley polygons" scripts/05_cooley_polygons.py
 
+step "20 forest loss"     scripts/20_forest_loss.py
+step "21 land cover"      scripts/21_landcover.py
+step "22 canopy height"   scripts/22_canopy_height.py
+step "23 protected areas" scripts/23_protected_areas.py
+step "24 fires"           scripts/24_fires.py
+
 if [ "$GEDI" != "skipgedi" ]; then
   step "10 gedi search"   scripts/10_gedi_search.py
   if [ -n "$GEDI" ]; then

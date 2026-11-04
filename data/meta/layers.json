@@ -131,6 +131,105 @@
    "licence": "Open Data Commons Attribution License (ODC-By), as stated on the dataset page",
    "citation": "Instituto Geogr\u00e1fico Nacional (IGN), Plataforma Nacional de Datos Abiertos",
    "caveats": "Referential boundaries at 1:100,000; simplified ~90 m for display."
+  },
+  {
+   "id": "protected_areas",
+   "title": "Protected areas (ANP & ACR)",
+   "group": "Conservation",
+   "type": "vector",
+   "urls": {
+    "polygons": "vectors/protected_areas.geojson"
+   },
+   "source": "SERNANP public map service (geoservicios.sernanp.gob.pe, peru_sernanp_0102: ANP definitivas + ACR), clipped to Ucayali and simplified ~90 m",
+   "period": "fetched 2026-11-04 (creation year per area in the popup)",
+   "licence": "SERNANP viewer terms: information 'de dominio p\u00fablico'; derived maps authorised with SERNANP cited as source; no commercialisation; redistribution of the original information not authorised (this file is a clipped, simplified derivative; verbatim terms in the data report)",
+   "citation": "SERNANP - Servicio Nacional de \u00c1reas Naturales Protegidas por el Estado (geo.sernanp.gob.pe)",
+   "caveats": "Boundaries simplified for display; legal areas (ha) are the service's anp_suleg/acr_suleg values, not recomputed."
+  },
+  {
+   "id": "fire",
+   "title": "Active fires (VIIRS)",
+   "group": "Fire",
+   "type": "thematic",
+   "urls": {
+    "density": {
+     "2012": "tiles/fire_density_2012.pmtiles",
+     "2013": "tiles/fire_density_2013.pmtiles",
+     "2014": "tiles/fire_density_2014.pmtiles",
+     "2015": "tiles/fire_density_2015.pmtiles",
+     "2016": "tiles/fire_density_2016.pmtiles",
+     "2017": "tiles/fire_density_2017.pmtiles",
+     "2018": "tiles/fire_density_2018.pmtiles",
+     "2019": "tiles/fire_density_2019.pmtiles",
+     "2020": "tiles/fire_density_2020.pmtiles",
+     "2021": "tiles/fire_density_2021.pmtiles",
+     "2022": "tiles/fire_density_2022.pmtiles",
+     "2023": "tiles/fire_density_2023.pmtiles",
+     "2024": "tiles/fire_density_2024.pmtiles",
+     "2025": "tiles/fire_density_2025.pmtiles"
+    },
+    "points": "fire/points_{year}.geojson"
+   },
+   "years": [
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "points_from_zoom": 10,
+   "legend_steps": {
+    "breaks": [
+     1,
+     3,
+     10,
+     30,
+     100
+    ],
+    "colors": [
+     "#f8c471",
+     "#eb984e",
+     "#e55064",
+     "#b03a2e",
+     "#78281f"
+    ]
+   },
+   "source": "NASA FIRMS VIIRS 375 m active fires (S-NPP), yearly Peru archives, bbox clip",
+   "period": "2012-2025",
+   "units": "detections per km\u00b2 per year (~1 km cells)",
+   "licence": "NASA FIRMS data are freely available; cite NASA FIRMS",
+   "citation": "NASA FIRMS: VIIRS 375 m active fire product (VNP14IMGT). firms.modaps.eosdis.nasa.gov",
+   "caveats": "Detections, not burned area: small/short fires can be missed under cloud; confidence nominal/high only."
+  },
+  {
+   "id": "canopy",
+   "title": "Canopy height (ETH 2020)",
+   "group": "Vegetation",
+   "type": "thematic",
+   "urls": {
+    "tiles": "tiles/canopy.pmtiles",
+    "query": "query/canopy_height_10m.tif"
+   },
+   "minzoom": 5,
+   "maxzoom": 12,
+   "ramp": {
+    "max_m": 40
+   },
+   "source": "ETH Global Canopy Height 2020, 10 m (GEDI + Sentinel-2 deep-learning fusion), six 3-degree tiles mosaicked and clipped to the department",
+   "period": "2020",
+   "units": "canopy top height, m (RH98-calibrated)",
+   "licence": "CC BY 4.0 (ETH Research Collection record)",
+   "citation": "Lang, N., Jetz, W., Schindler, K. & Wegner, J.D. (2023). A high-resolution canopy height model of the Earth. Nature Ecology & Evolution 7:1778-1789. doi:10.1038/s41559-023-02206-6. Data: doi:10.3929/ethz-b-000609802",
+   "caveats": "Model estimate, not a measurement: tall-canopy heights saturate and the map carries the model's uncertainty (a per-pixel SD layer exists upstream). Display tiles are averaged to ~38 m at z12; clicks read the 10 m raster."
   }
  ]
 }

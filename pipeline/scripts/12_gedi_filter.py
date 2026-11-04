@@ -91,7 +91,14 @@ def filter_file(path: Path, beams, sens_min, elev_max, bbox):
         return counts, None
     cat = {k: np.concatenate(v) for k, v in rows.items()}
     rh = cat.pop("rh")
+    # acquisition date from the granule name (GEDI02_A_YYYYDDDHHMMSS_...): the replication set is a
+    # date filter (2019-04-18..2021-12-31) over the one mission-window download
+    import datetime as _dt
+    m = __import__("re").search(r"GEDI02_A_(\d{4})(\d{3})", path.name)
+    date = (_dt.date(int(m.group(1)), 1, 1) + _dt.timedelta(days=int(m.group(2)) - 1)) if m else None
+    n_rows = len(cat["shot_number"])
     table = pa.table({**{k: v for k, v in cat.items()},
+                      "date": pa.array([date] * n_rows, pa.date32()),
                       "rh": pa.FixedSizeListArray.from_arrays(pa.array(rh.ravel(), pa.float32()), 101),
                       "rh50": rh[:, 50], "rh75": rh[:, 75], "rh95": rh[:, 95], "rh98": rh[:, 98]})
     return counts, table
@@ -127,7 +134,7 @@ def main():
                  counts["in_bbox_paper"], counts["strict"])
         done += 1
     cj = common.WORK / "gedi" / "filter_counts.json"
-    old = json.loads(cj.read_text()).get("stages", {}) if cj.exists() else {}
+    old = {} if args.force else (json.loads(cj.read_text()).get("stages", {}) if cj.exists() else {})
     merged = {k: old.get(k, 0) + total[k] for k in STAGES}
     cj.write_text(json.dumps({"stages": merged,
                               "note": "cumulative over processed files; 'in_bbox_paper' = the paper's "

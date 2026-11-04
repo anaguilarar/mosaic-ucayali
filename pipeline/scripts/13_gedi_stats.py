@@ -1,8 +1,11 @@
-"""Step 13 - pilot/QA statistics: filtered shots against the Cooley vegetation polygons, for BOTH
-shot sets built from the same Parquet:
-  paper  - the replication set: exactly Cooley et al. (2024) sect. 2.4 filters (power beams,
-           sensitivity >= 0.9, <= 2 m ground-elevation agreement). Everything in the Parquet.
-  strict - the app's map-product set: paper + quality_flag = 1 and degrade_flag = 0.
+"""Step 13 - pilot/QA statistics: filtered shots against the Cooley vegetation polygons. One
+mission-window download serves everything; the sets are column/date filters over the same Parquet:
+  filter sets:  paper  - exactly Cooley et al. (2024) sect. 2.4 (everything in the Parquet);
+                strict - paper + quality_flag = 1 and degrade_flag = 0 (app map products).
+  date windows: replication - 2019-04-18..2021-12-31 (config replication_window), the only window
+                compared with the paper's tables; mission - every shot downloaded.
+The polygon comparison is reported for both filter sets in BOTH windows (mission counts over the
+2020/21-vintage polygons are QA only, flagged as such).
 
 For each set: shots per class (a) inside the polygons and (b) inside the polygons eroded by
 32.5 m (the shot's ~65 m homogeneous area - footprint + 2-sigma geolocation error, Fig. 6 p.15 -
@@ -33,9 +36,9 @@ def main():
     files = sorted(pdir.rglob("*.parquet"))
     if not files:
         sys.exit("no parquet yet: run 12_gedi_filter.py first")
-    cols = ["lon", "lat", "rh95", "rh50", "beam", "quality_flag", "degrade_flag"]
+    cols = ["lon", "lat", "rh95", "rh50", "beam", "quality_flag", "degrade_flag", "date"]
     shots = pd.concat([pq.read_table(f, columns=cols).to_pandas() for f in files], ignore_index=True)
-    log.info("paper-set shots loaded: %d from %d file(s)", len(shots), len(files))
+    log.info("paper-set shots loaded (mission download): %d from %d file(s)", len(shots), len(files))
 
     src = common.COOLEY / common.CFG["inputs"]["cooley_geojson"]
     polys = gpd.read_file(src).to_crs("EPSG:4326")
@@ -56,8 +59,15 @@ def main():
                                          j.groupby("COBERTURA")["rh95"].mean().to_dict().items()},
                 "rh95_n_by_class": j.groupby("COBERTURA").size().to_dict()}
 
-    strict = shots[(shots.quality_flag == 1) & (shots.degrade_flag == 0)]
-    stats = {"paper": analyse(shots), "strict": analyse(strict)}
+    import datetime as dt
+    r0, r1 = (dt.date.fromisoformat(d) for d in common.CFG["gedi"]["replication_window"])
+    in_rep = shots.date.map(lambda d: d is not None and r0 <= d <= r1)
+    strict_m = (shots.quality_flag == 1) & (shots.degrade_flag == 0)
+    stats = {"replication": {"paper": analyse(shots[in_rep]),
+                             "strict": analyse(shots[in_rep & strict_m])},
+             "mission": {"paper": analyse(shots), "strict": analyse(shots[strict_m]),
+                         "note": "QA only: the polygons are 2020/21 vintage; paper comparisons "
+                                 "use the replication window"}}
 
     months = sorted({f.parent.name for f in files})
     sub = common.WORK / "gedi" / "subsets"

@@ -36,6 +36,12 @@ Step '03' 'sentinel-2'      @('scripts/03_s2.py')
 Step '04' 'osm labels'      @('scripts/04_osm_labels.py')
 Step '05' 'cooley polygons' @('scripts/05_cooley_polygons.py')
 
+Step '20' 'forest loss (GEOBOSQUES)' @('scripts/20_forest_loss.py')
+Step '21' 'land cover (MapBiomas)'   @('scripts/21_landcover.py')
+Step '22' 'canopy height (ETH)'      @('scripts/22_canopy_height.py')
+Step '23' 'protected areas'          @('scripts/23_protected_areas.py')
+Step '24' 'fires (VIIRS + MapBiomas)' @('scripts/24_fires.py')
+
 if (-not $SkipGedi) {
   Step '10' 'gedi search'   @('scripts/10_gedi_search.py', '--window', $GediWindow)
   if ($GediMonth) {

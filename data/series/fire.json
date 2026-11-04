@@ -1,0 +1,20 @@
+{
+ "snpp_detections_dept": {
+  "2012": 11839,
+  "2013": 10133,
+  "2014": 7934,
+  "2015": 10681,
+  "2016": 10070,
+  "2017": 9746,
+  "2018": 8294,
+  "2019": 12688,
+  "2020": 12450,
+  "2021": 11988,
+  "2022": 13861,
+  "2023": 13697,
+  "2024": 17468,
+  "2025": 9131
+ },
+ "burned_km2_dept": {},
+ "caveats": "VIIRS S-NPP only (NOAA-20/21 excluded for a consistent series), confidence nominal/high, inside the department boundary; this app's analysis"
+}

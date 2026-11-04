@@ -14,4 +14,9 @@ when located; the reconstructions have not been run.
   bbox). **DEM assumed Copernicus GLO-30** (band name agrees); registry and DATA_REPORT keep
   a "to confirm" caveat until confirmed.
 
+- `gee_mapbiomas_export.js` — HELPER (2026-11-04): exports MapBiomas Perú C4 coverage years and
+  Fuego annual burned clipped to the department, because the published direct-download links on
+  storage.googleapis.com answer 403 server-side. Run in the EE code editor; save the Drive
+  outputs into the work dir as the header says, then re-run pipeline steps 21 and 24.
+
 The processing pipeline itself lives in `pipeline/` (see `pipeline/RUN.md`).
