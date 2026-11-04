@@ -41,13 +41,16 @@ export function layersFor(registry, pmUrl) {
   if (fp) {
     // the 1 km grid fades as the footprints take over
     const grid = layers.find((l) => l.id === "gedi-grid-tiles");
-    if (grid) grid.paint["raster-opacity"] = ["interpolate", ["linear"], ["zoom"], 9, 0.85, 11, 0.3];
+    if (grid) grid.paint["raster-opacity"] = ["interpolate", ["linear"], ["zoom"], 9, 0.85, 11.5, 0];
     sources["gedi-fp"] = { type: "vector", url: pmUrl(fp) };
     layers.push({ id: "gedi-fp", type: "circle", source: "gedi-fp", "source-layer": "footprints",
       minzoom: registry.gedi.footprints_from_zoom ?? 9, layout: { visibility: "none" },
-      paint: { "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 9, 1.3, 13, 2.6, 18, 21],
+      // from zoom 16 the dot is the footprint's true size (12.5 m radius); below, a visible minimum
+      // a white rim keeps dark (tall) dots visible on dark forest imagery
+      paint: { "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 9, 1.6, 12, 3.8, 14, 4.8, 16, 5.3, 18, 21.2],
                "circle-color": ["interpolate", ["linear"], ["get", "rh95"], ...GEDI_RAMP],
-               "circle-stroke-color": "rgba(16,32,24,0.55)", "circle-stroke-width": 0.5 } });
+               "circle-stroke-color": "rgba(255,255,255,0.7)",
+               "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 9, 0.3, 13, 0.7] } });
   }
   return { sources, layers };
 }

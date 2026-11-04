@@ -74,7 +74,7 @@
   {
    "id": "gedi",
    "title": "A laser from the Space Station",
-   "text": "NASA's GEDI lidar, mounted on the International Space Station, fires laser pulses that return the vertical structure of the forest in 25 m footprints — through the haze and between the clouds that defeat optical satellites. Cooley et al. kept only the most reliable shots: full-power beams, beam sensitivity of at least 0.9, and ground elevations that five of six algorithms agreed on to within 2 m. Run again by this app over a box around the department (April 2019 – July 2025), those three filters keep about 18 % of the full-power shots. The map shows the ones inside the department that also pass GEDI's own quality flags: each dot is one footprint, coloured by its height.",
+   "text": "NASA's GEDI lidar, mounted on the International Space Station, fires laser pulses that return the vertical structure of the forest in 25 m footprints — through the haze and between the clouds that defeat optical satellites. Cooley et al. kept only the most reliable shots: full-power beams, beam sensitivity of at least 0.9, and ground elevations that five of six algorithms agreed on to within 2 m. Of the 29.1 million full-power shots GEDI recorded over a box around the department from April 2019 to July 2025, about one in five passes all three tests; the rest fail the sensitivity test or the ground-elevation test. The map then keeps only the shots inside the department that also pass GEDI's own quality flags: 1.5 million footprints, each a dot coloured by its height.",
    "visual": { "layers": ["gedi"], "camera": { "lng": -75.2, "lat": -8.9, "zoom": 10.2, "pitch": 0 } },
    "numbers": [
     { "value": "5.25 of 29.1 million", "label": "full-power GEDI shots over a box around the department that pass the paper's three filters, April 2019 – July 2025",
@@ -95,20 +95,18 @@
   {
    "id": "heights",
    "title": "How tall is each forest?",
-   "text": "Height separates the classes cleanly at the extremes: mature lowland forest averages 29.55 m at the 95th energy percentile (RH95), secondary forest 21.25 m, while young purma (6.33 m) and monocrop cacao (6.85 m) are almost indistinguishable by height alone. Mature oil palm sits in between at 11.50 m. The canopy-height map behind this chapter is a different, wall-to-wall model estimate (ETH 2020) — the paper's numbers come from the GEDI footprints themselves.",
-   "visual": { "layers": ["canopy"], "camera": { "lng": -74.95, "lat": -8.85, "zoom": 9.5, "pitch": 0 },
+   "text": "Each dot is one GEDI footprint, coloured by its RH95 — the height below which 95 % of the returned laser energy lies: dark green is tall canopy, pale is low. The outlines are the vegetation classes mapped with local experts. Step through three of them. In mature lowland forest (more than 20 years old) almost every dot is dark; Cooley et al. report a mean RH95 of 29.55 m for this class. In secondary forest (about 8–20 years) pale and dark dots sit side by side; its mean is 21.25 m, with the widest spread of any class (sd 8.85 m), which the authors attribute to patches at different stages of regrowth. In purma, regrowth younger than about 8 years, the dots are pale: 6.33 m on average, close to monocrop cacao (6.85 m). Oil palm sits in between at 11.50 m.",
+   "visual": { "layers": ["gedi"], "outlines": true, "focus": "SC_338",
+     "camera": { "bounds": [-75.2313, -9.0767, -75.1766, -9.0051], "pitch": 0 },
      "chart": "rh95_by_class",
-     "comparison": {
-      "title": "This app's GEDI footprints next to Tables 2b and 2a",
-      "intro": "This app's analysis: shots that pass the paper's three filters in the replication window (18 April 2019 – 31 December 2021), inside the published vegetation-class polygons.",
-      "columns": ["Class", "This app: mean RH95 (n)", "Table 2b, same method: mean (n)", "Table 2a, ground returns removed: mean (n)"],
-      "rows": [
-       ["Mature lowland forest", "31.46 m (9,697)", "29.40 m (2,061)", "29.55 m (2,063)"],
-       ["Secondary lowland forest", "20.50 m (299)", "20.82 m (281)", "21.25 m (282)"],
-       ["Young vegetation regrowth (purma)", "5.83 m (46)", "5.55 m (46)", "6.33 m (46)"]
-      ],
-      "note": "Secondary forest and purma agree with Table 2b within about 0.3 m. Mature forest does not replicate: the app's mature-forest polygons collect 4.7 times as many footprints as the paper's sample and average 31.46 m against 29.40 m (Table 2b, p.16), so the two samples are not the same."
-     } },
+     "steps": [
+      { "label": "1 · Mature lowland forest", "layer": "gedi", "focus": "SC_338",
+        "camera": { "bounds": [-75.2313, -9.0767, -75.1766, -9.0051], "pitch": 0 } },
+      { "label": "2 · Secondary forest", "layer": "gedi", "focus": "SC_344",
+        "camera": { "bounds": [-74.9404, -8.4055, -74.9264, -8.3941], "pitch": 0 } },
+      { "label": "3 · Purma", "layer": "gedi", "focus": "SC_356",
+        "camera": { "bounds": [-74.8986, -8.7188, -74.8943, -8.7143], "pitch": 0 } }
+     ] },
    "numbers": [
     { "value": "29.55 m", "label": "mean canopy height (RH95) of mature lowland forest, n = 2,063 footprints",
       "source": { "kind": "study", "citation": "Cooley et al. (2024), Table 2a", "page": "p.16" } },
@@ -117,8 +115,9 @@
    ],
    "sources": [
     "RH95 by class: Table 2a, p.16 (ground returns removed). The abstract quotes the untransformed Table 2b values (29.40 / 20.82 m), p.1–2 and p.16.",
-    "RH50 by class: Table 3a, p.16.",
-    "Background map: Lang et al. (2023) ETH canopy height 2020, 10 m (CC BY 4.0) — a model estimate, independent of the paper."
+    "Class ages: Table 1, pp.8–10. Secondary forest's spread and regrowth stages: sect. 4.1, p.17.",
+    "Map: GEDI L2A v002 footprints, the paper's filters plus GEDI's quality flags, April 2019 – July 2025 (chapter 4); polygons SC_338, SC_344 and SC_356 of the CaltechDATA v4 vegetation typologies (CC0).",
+    "How this app's footprints compare with the paper's tables: data report, replication check."
    ]
   },
   {

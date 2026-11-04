@@ -258,8 +258,10 @@ windows of the Andean fringe.
   beams only); 0.9 ≤ sensitivity ≤ 1.0 **17,157,197**; ground-elevation agreement
   **5,250,300** = the paper set (18.0 % of the subset shots); strict set **3,858,844**. Inside
   the department: **1,506,194** strict shots (first 2019-04-20, last 2025-07-09).
-- **Replication window vs the paper (this app's analysis; paper set, 2019-04-18 → 2021-12-31,
-  shots inside the polygons; RH95 = GEDI's own rh[95], i.e. untransformed).**
+- **Replication check: replication window vs the paper (this app's analysis; paper set,
+  2019-04-18 → 2021-12-31, shots inside the polygons; RH95 = GEDI's own rh[95], i.e.
+  untransformed).** Kept here, not in the story: chapter 5 narrates the footprints and quotes
+  the paper's values only.
 
   This app's RH95 includes the ground returns, i.e. the same method as the paper's **Table 2b**
   (untransformed), which is therefore the like-for-like column; Table 2a (negative height returns
@@ -283,6 +285,18 @@ windows of the Andean fringe.
   Classes the paper did not analyse also receive shots (Aguajales 193, mean 28.39 m;
   Bosque_inundado 4; Bosque_de_colina_alta 1,667, 25.81 m; Pastizales 39) — QA only.
   Strict-set and mission-window equivalents are in `work/gedi/stats.json`.
+- **Story chapter 5 polygons** (chosen for many footprints and a clear height contrast; this
+  app's analysis, shots inside the polygon; "map" = the strict mission-window dots the reader
+  sees, with their 10th–90th percentile RH95):
+
+  | Step | PLOTID | Class | Area | Footprints, replication window (paper set) | Dots on the map | RH95 p10–p90 of the dots |
+  |---|---|---|---|---|---|---|
+  | 1 | SC_338 | Mature lowland forest | 1,898 ha | 218 | 444 | 22.3–37.0 m |
+  | 2 | SC_344 | Secondary or degraded lowland forest | 134 ha | 16 | 34 | 10.1–24.8 m |
+  | 3 | SC_356 | Young vegetation regrowth (purma) | 8.6 ha | 18 | 18 | 3.0–13.6 m |
+
+  Larger mature polygons (SC_531, 72,540 ha; SC_532) are too big to frame at footprint scale;
+  SC_345 (secondary, 23 replication footprints, 2.4–19.1 m) is the alternative to SC_344.
 - **Tall outliers (decision 2026-11-04: kept).** **2,247** strict shots in the department
   (**0.15 %** of 1,506,194) report RH95 > 60 m (up to 137 m; RH50 typically ~20 m; mostly
   dry-season months) — probably noise or atmospheric returns that pass the paper's filters.
@@ -301,7 +315,8 @@ windows of the Andean fringe.
   through — checked: same screen colour with the layer on and off), and the legend explains them
   ("no valid GEDI shot in this 1 km cell"). `gedi_grid.pmtiles` (0.7 MB): display tiles of the grid
   (z5–9, nearest, the canopy ramp 0–40 m). In the app the grid fades out between zooms 9 and 11
-  as the footprints take over.
+  as the footprints take over; from zoom 16 each dot is drawn at the footprint's true size
+  (12.5 m radius), below that at a visible minimum.
 
 ## 4. References
 

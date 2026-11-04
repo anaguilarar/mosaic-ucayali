@@ -54,9 +54,26 @@ function setStoryMode(on) {
   const map = state.hooks?.map;
   if (!map) return;
   const apply = () => {
-    if (!on) map.easeTo({ padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400, freezeElevation: true });
+    if (!on) {
+      setOutlines(false);
+      map.easeTo({ padding: { top: 0, bottom: 0, left: 0, right: 0 }, duration: 400, freezeElevation: true });
+    }
   };
   if (map.isStyleLoaded()) apply(); else map.once("load", apply);
+}
+
+/* vegetation-class outlines over whatever overlay a chapter shows; focus: one PLOTID drawn heavier */
+function setOutlines(on, focus = null) {
+  const map = state.hooks?.map;
+  if (!map) return;
+  for (const id of ["story-veg-halo", "story-veg-line"]) {
+    if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  }
+  for (const id of ["story-veg-focus-halo", "story-veg-focus"]) {
+    if (!map.getLayer(id)) continue;
+    map.setFilter(id, ["==", ["get", "PLOTID"], focus || ""]);
+    map.setLayoutProperty(id, "visibility", on && focus ? "visible" : "none");
+  }
 }
 
 /* camera padding so the chapter's subject sits centred in the visible map, not under the drawer/sheet */
@@ -155,6 +172,7 @@ function chapterEl(ch) {
           await state.hooks.setOverlay(st.layer);
           if (st.time != null) await state.hooks.presetTime?.(st.layer, st.time);
         }
+        if (st.focus || ch.visual.outlines) setOutlines(true, st.focus || null);
         if (st.camera) fly(st.camera);
       });
       row.append(chip);
@@ -163,7 +181,6 @@ function chapterEl(ch) {
   }
   if (ch.visual?.note) c.append(el("p", "stories-note", ch.visual.note));
   if (ch.visual?.pending_note) c.append(el("p", "stories-note", ch.visual.pending_note));
-  if (ch.visual?.comparison) c.append(comparisonEl(ch.visual.comparison));
   for (const n of ch.numbers || []) c.append(numberEl(n));
   if (ch.sources?.length) {
     const d = el("details", "sources");
@@ -177,33 +194,6 @@ function chapterEl(ch) {
     c.append(el("div", "story-actions"), btn);
   }
   return c;
-}
-
-/* a small side-by-side table (this app vs the paper); class names wrap, figures never do */
-function comparisonEl(cmp) {
-  const box = el("div", "story-comparison");
-  if (cmp.title) box.append(el("h4", "chapter-chart-title", cmp.title));
-  if (cmp.intro) box.append(el("p", "stories-note", cmp.intro));
-  const t = el("table");
-  t.style.cssText = "width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;margin:4px 0 6px";
-  const tr = (cells, head) => {
-    const r = el("tr");
-    cells.forEach((v, i) => {
-      // "31.46 m (9,697)": the count goes on its own line so four columns fit a phone
-      const html = !head && i ? v.replace(/ \((.+)\)$/, '<br><span style="color:var(--muted,#5f6368)">($1)</span>') : v;
-      const c = el(head ? "th" : "td", null, html);
-      c.style.cssText = `padding:4px 5px;border-bottom:1px solid var(--line,#dde3e0);vertical-align:top;`
-        + (i ? "text-align:right;white-space:nowrap;" : "text-align:left;overflow-wrap:break-word;")
-        + (head ? "font-weight:600;font-size:11.5px;color:var(--muted,#5f6368);white-space:normal;" : "");
-      r.append(c);
-    });
-    return r;
-  };
-  t.append(tr(cmp.columns, true));
-  for (const row of cmp.rows) t.append(tr(row, false));
-  box.append(t);
-  if (cmp.note) box.append(el("p", "stories-note", cmp.note));
-  return box;
 }
 
 function numberEl(n) {
@@ -241,6 +231,7 @@ async function applyChapter(ch) {
   const layer = swipe ? null : (v.layers || []).find((id) => h.overlayAvailable(id));
   await h.setOverlay(layer || null);
   if (stale()) return;
+  setOutlines(Boolean(v.outlines), v.focus || null);
   /* swipe: open first - its synchronous part levels the map (terrain off, max pitch 0) before the
      flight starts. Opening during a flight would stop the camera mid-way, still tilted. */
   const opening = swipe && !compare.isOpen() ? compare.open(h.map, {
@@ -256,8 +247,23 @@ async function applyChapter(ch) {
 /* freezeElevation: without it, maplibre 5.6's terrain elevation update can crash mid-flight
    ('reading wrap') and jam the camera's task queue for good */
 function fly(cam) {
-  state.hooks.map.flyTo({ center: [cam.lng, cam.lat], zoom: cam.zoom ?? 8, pitch: cam.pitch ?? 0, bearing: 0,
+  let center = [cam.lng, cam.lat], zoom = cam.zoom ?? 8;
+  if (cam.bounds) {                      // [w, s, e, n]: frame it in the part of the map the drawer leaves free
+    const b = cam.bounds;
+    center = [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+    zoom = Math.min(cam.maxZoom ?? state.hooks.map.getMaxZoom(), boundsZoom(b, cam.fill ?? 0.6));
+  }
+  state.hooks.map.flyTo({ center, zoom, pitch: cam.pitch ?? 0, bearing: 0,
                           duration: 1600, freezeElevation: true, padding: storyPadding() });
+}
+
+/* the zoom at which bounds fill `fill` of the visible map (container minus the story padding) */
+function boundsZoom(b, fill) {
+  const map = state.hooks.map, p = storyPadding(), box = map.getContainer();
+  const w = (box.clientWidth - p.left - p.right) * fill, h = (box.clientHeight - p.top - p.bottom) * fill;
+  const my = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+  const sx = ((b[2] - b[0]) / 360) * 512, sy = (Math.abs(my(b[3]) - my(b[1])) / (2 * Math.PI)) * 512;
+  return Math.log2(Math.min(w / sx, h / sy));
 }
 
 /* figure overlay over the map */

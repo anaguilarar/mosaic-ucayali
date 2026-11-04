@@ -364,6 +364,16 @@ function initMap() {
                   paint: { "fill-color": ["get", "color"], "fill-opacity": 0.72 } });
     layers.push({ id: "veg-line", type: "line", source: "veg", layout: { visibility: "none" },
                   paint: { "line-color": ["get", "color"], "line-width": 1.2 } });
+    // story only (stories.js setOutlines): class outlines over any overlay, and the polygon a step is about
+    const none = { visibility: "none" }, noPlot = ["==", ["get", "PLOTID"], ""];
+    layers.push({ id: "story-veg-halo", type: "line", source: "veg", layout: none,
+                  paint: { "line-color": "#ffffff", "line-width": 3, "line-opacity": 0.75 } });
+    layers.push({ id: "story-veg-line", type: "line", source: "veg", layout: none,
+                  paint: { "line-color": ["get", "color"], "line-width": 1.4 } });
+    layers.push({ id: "story-veg-focus-halo", type: "line", source: "veg", layout: none, filter: noPlot,
+                  paint: { "line-color": "#ffffff", "line-width": 6 } });
+    layers.push({ id: "story-veg-focus", type: "line", source: "veg", layout: none, filter: noPlot,
+                  paint: { "line-color": "#1c2b3a", "line-width": 2.6 } });
   }
   if (state.have["vectors/protected_areas.geojson"]) {
     sources.pa = { type: "geojson", data: dataUrl("vectors/protected_areas.geojson") };
@@ -398,7 +408,7 @@ function initMap() {
                     "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.7 },
              glyphs: new URL(dataUrl("fonts/"), location.href).href + "{fontstack}/{range}.pbf" },
     center: [-73.6, -9.5], zoom: 6.1, pitch: 32, bearing: 0,
-    maxPitch: 62, minZoom: 5.5, maxZoom: 13, attributionControl: false,
+    maxPitch: 62, minZoom: 5.5, maxZoom: 16, attributionControl: false,   // 16: GEDI footprints at true size
     maxBounds: [[-79.0, -14.3], [-67.4, -4.4]],   // terrain tiles are padded ~300 km beyond the DEM
   });
   window.__map = map;
