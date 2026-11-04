@@ -1,0 +1,9 @@
+# intermediates and downloads live in the pipeline's work_dir (see pipeline/config.example.toml)
+work/
+*.log
+__pycache__/
+.env
+# large rasters are never committed; the app's published files go to Hugging Face
+*.tif
+*.h5
+*.parquet
