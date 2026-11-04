@@ -14,5 +14,7 @@ data/tiles/*.pmtiles
 data/query/
 data/fire/
 *.tif
+# the climate stacks are small and served from the repo (SITE list)
+!data/climate/**/*.tif
 *.h5
 *.parquet

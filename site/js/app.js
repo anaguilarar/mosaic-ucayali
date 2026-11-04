@@ -1,6 +1,7 @@
 /* MOSAIC Ucayali Explorer — map-first app screen, scaffolded from the Lake Victoria Basin Explorer.
    Static: PMTiles + GeoJSON + JSON read from the data root (site/js/config.js dataUrl). No backend. */
 
+import * as climate from "./climate.js";
 import * as stories from "./stories.js";
 import * as thematic from "./thematic.js";
 
@@ -34,6 +35,12 @@ const OVERLAYS = [
     regKey: "burned_area", swatch: "#782012" },
   { id: "protected_areas", group: "Conservation", title: "Protected areas (ANP & ACR)", type: "vector",
     file: "vectors/protected_areas.geojson", regKey: "protected_areas", swatch: "#2e86ab" },
+  { id: "precip", group: "Climate", title: "Precipitation", type: "climate",
+    file: "climate/app/app_meta.json", swatch: "#434e6b" },
+  { id: "temperature", group: "Climate", title: "Temperature", type: "climate",
+    file: "climate/app/app_meta.json", swatch: "#e14c66" },
+  { id: "spi3", group: "Climate", title: "Drought (SPI-3)", type: "climate",
+    file: "climate/app/spi3.tif", swatch: "#35978f" },
 ];
 
 const $ = (s) => document.querySelector(s);
@@ -57,7 +64,7 @@ window.addEventListener("unhandledrejection", (e) => notice("Error: " + (e.reaso
   const probeList = ["tiles/terrain.pmtiles", "tiles/s2_rgb.pmtiles", "tiles/osm_basemap.pmtiles",
                      "vectors/department.geojson", "vectors/department_mask.geojson",
                      "vectors/provinces.geojson", "vectors/districts.geojson",
-                     "vectors/admin_labels.geojson",
+                     "vectors/admin_labels.geojson", "climate/app/app_meta.json",
                      ...OVERLAYS.filter((o) => o.file).map((o) => o.file)];
   await Promise.all(probeList.map(async (f) => { have[f] = !isWithheld(f) && await exists(dataUrl(f)); }));
   state.have = have;
@@ -80,6 +87,7 @@ window.addEventListener("unhandledrejection", (e) => notice("Error: " + (e.reaso
       const item = document.querySelector(`.rail .item[data-overlay="${id}"]`);
       return Boolean(item && !item.classList.contains("unavailable"));
     },
+    presetClimate: (p) => climate.presetFromHash(p),
   });
 })();
 
@@ -92,7 +100,7 @@ function notice(msg) {
 /* ---------------- layer rail ---------------- */
 function buildRail() {
   const rail = $("#rail");
-  const groups = new Map([["Base", []], ["Vegetation", []], ["Land", []], ["Fire", []], ["Conservation", []]]);
+  const groups = new Map([["Base", []], ["Vegetation", []], ["Land", []], ["Climate", []], ["Fire", []], ["Conservation", []]]);
   const toggle = (title, swatch, ids, on, extra) => {
     const b = railItem(title, swatch, "");
     b.setAttribute("aria-pressed", String(on));
@@ -117,7 +125,7 @@ function buildRail() {
 
   for (const o of OVERLAYS) {
     const ok = o.type === "thematic" ? Boolean(state.registry[o.regKey]?.urls) : state.have[o.file];
-    const item = railItem(o.title, o.swatch, ok ? "" : "not built");
+    const item = railItem(o.title, o.swatch, ok ? "" : o.type === "climate" ? "preparing data" : "not built");
     if (!ok) item.classList.add("unavailable");
     else item.addEventListener("click", () => setOverlay(state.overlay === o.id ? null : o.id));
     item.dataset.overlay = o.id;
@@ -158,10 +166,14 @@ async function setOverlay(id) {
     for (const lid of overlayLayerIds(o.id)) setVisibility(map, lid, o.id === id ? "visible" : "none");
   }
   thematic.deactivate();
+  climate.deactivate();
   const def = OVERLAYS.find((x) => x.id === id);
   if (def?.type === "thematic") {
     $("#legend").hidden = true;
     await thematic.activate(id);          // thematic.js owns the legend while active
+  } else if (def?.type === "climate") {
+    $("#legend").hidden = true;
+    await climate.activate(id);           // climate.js owns the legend and the time bar
   } else {
     renderLegend(id);
   }
@@ -217,7 +229,9 @@ function updateAttrib() {
                   landcover: " · MapBiomas Perú C4 (CC BY 4.0)",
                   forest_loss: " · GEOBOSQUES (MINAM/SERFOR)",
                   fire: " · NASA FIRMS VIIRS", burned_area: " · MapBiomas fuego (CC BY 4.0)",
-                  protected_areas: " · SERNANP" };
+                  protected_areas: " · SERNANP",
+                  precip: " · CHIRPS v3 (UCSB CHC, CC BY 4.0)", temperature: " · CHIRTS-ERA5 (UCSB CHC)",
+                  spi3: " · SPI-3 from CHIRPS v3" };
   const extra = state.overlay ? (names[state.overlay] || "") : "";
   const ref = (state.placeNames ? " · © OpenStreetMap contributors" : "")
             + (state.admin ? " · IGN (ODC-By)" : "");
@@ -377,6 +391,9 @@ function initMap() {
 
   map.on("load", async () => {
     try { thematic.init(map); } catch (e) { notice("Thematic layers failed to start: " + e.message); }
+    if (state.have["climate/app/app_meta.json"]) {
+      try { await climate.init(map); } catch (e) { notice("Climate layers failed to start: " + e.message); }
+    }
     applyHash();
     if (map.setSky) {
       map.setSky({ "sky-color": "#c8d4de", "horizon-color": "#e7ebef", "fog-color": "#e7ebef",
@@ -390,6 +407,7 @@ function initMap() {
   });
 
   map.on("click", (e) => {
+    if (climate.isActive()) { climate.showCell(e.lngLat); return; }
     if (thematic.isActive()) { thematic.onClick(e.lngLat); return; }
     showPopover(e);
   });

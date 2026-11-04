@@ -72,6 +72,17 @@
     </section>
 
     <div class="timebar panel" id="timebar" hidden>
+      <div class="seg" id="segVar" role="group" aria-label="Variable" hidden>
+        <button data-v="precip" aria-pressed="true">Precip</button>
+        <button data-v="tmean" aria-pressed="false">Tmean</button>
+        <button data-v="tmax" aria-pressed="false">Tmax</button>
+        <button data-v="tmin" aria-pressed="false">Tmin</button>
+      </div>
+      <div class="seg" id="segSeason" role="group" aria-label="Season" hidden><!-- built from app_meta.json --></div>
+      <div class="seg" id="segMode" role="group" aria-label="Mode" hidden>
+        <button data-v="value" aria-pressed="true">Value</button>
+        <button data-v="anomaly" aria-pressed="false">Anomaly</button>
+      </div>
       <div class="yearbox">
         <input type="range" id="yearSlider" min="0" max="1" step="1" value="0" aria-label="Year">
         <span class="num" id="timeLabel"></span>

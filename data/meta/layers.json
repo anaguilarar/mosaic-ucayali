@@ -266,6 +266,58 @@
     }
    },
    "period": "baseline 2000, loss 2001-2024, forest state 2024"
+  },
+  {
+   "id": "precip",
+   "title": "Precipitation (CHIRPS v3)",
+   "group": "Climate",
+   "type": "climate",
+   "urls": {
+    "app": "climate/app/",
+    "series": "series/precip_dept.json"
+   },
+   "source": "CHIRPS v3.0 daily (RNL, ERA5-disaggregated), 0.05 deg, via the aaguilar90 Hugging Face zarr mirror of UCSB CHC data",
+   "period": "1981-01 to 2026-08",
+   "units": "mm",
+   "licence": "CC-BY-4.0",
+   "caveats": "The latest 2-3 CHIRPS months are provisional and may be revised.",
+   "citation": "Funk et al. (2015), Scientific Data 2:150066; CHIRPS v3.0, UCSB Climate Hazards Center"
+  },
+  {
+   "id": "temperature",
+   "title": "Temperature (CHIRTS-ERA5)",
+   "group": "Climate",
+   "type": "climate",
+   "urls": {
+    "app": "climate/app/",
+    "series": "series/temp_dept.json"
+   },
+   "source": "CHIRTS-ERA5 daily Tmax/Tmin, 0.05 deg; Tmean = (Tmax+Tmin)/2; via the aaguilar90 Hugging Face zarr mirror of UCSB CHC data",
+   "period": "1981-01 to 2026-08",
+   "units": "degC",
+   "licence": "CC-BY-4.0",
+   "citation": "Funk et al. (2019), J. Climate 32:5639-5658; CHIRTS-ERA5, UCSB CHC"
+  },
+  {
+   "id": "spi3",
+   "title": "Drought index (SPI-3)",
+   "group": "Climate",
+   "type": "climate-monthly",
+   "urls": {
+    "stack": "climate/app/spi3.tif",
+    "cells": "climate/app/spi3_cells.bin",
+    "qc": "climate/app/spi3_qc.tif",
+    "series": "series/spi3_dept.json"
+   },
+   "palette": {
+    "value": "BrBG diverging, centred 0, fixed -3..3 (values clipped to +-3)"
+   },
+   "source": "SPI-3 computed from CHIRPS v3.0 monthly totals (gamma fit, Thom 1958; zero-rain mixed distribution), calibration 1991-2020",
+   "period": "1981-03 to 2026-08",
+   "units": "SPI (unitless)",
+   "licence": "Derived from CHIRPS v3.0 (CC-BY-4.0)",
+   "caveats": "The latest 2-3 CHIRPS months are provisional; class names follow WMO (2012).",
+   "citation": "McKee, Doesken & Kleist (1993), 8th Conf. Applied Climatology; classes: WMO (2012), SPI User Guide, WMO-No. 1090; Funk et al. (2015), Sci. Data 2:150066"
   }
  ]
 }

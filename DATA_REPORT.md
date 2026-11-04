@@ -24,6 +24,9 @@ the papers.
 | protected_areas | **SERNANP** ArcGIS service (geoservicios.sernanp.gob.pe, peru_sernanp_0102): layer 0 ANP definitivas + layer 2 ACR, clipped to Ucayali, simplified ~90 m | SERNANP viewer terms (verbatim in §2): public-domain information, derived maps authorised citing SERNANP, no commercialisation, original data not redistributable | vectors; fetched 2026-11-04 | 23 |
 | fire | **NASA FIRMS** VIIRS 375 m active fires (S-NPP), yearly Peru CSV archives | NASA FIRMS: freely available, cite FIRMS | points; 2012–2025; ~1 km density grids | 24 |
 | burned_area | **MapBiomas Perú Fuego Collection 1** annual burned, 30 m (same blocked bucket — via the GEE export; Collection 2 covers 1990–2025 as GEE assets for a later upgrade) | **CC BY 4.0** | 30 m; 2013–2024 | 24 (awaiting files) |
+| precip | **CHIRPS v3.0** daily precipitation (final RNL, ERA5-disaggregated), 0.05°, via the aaguilar90 Hugging Face zarr mirror of UCSB CHC data; monthly/annual aggregates clipped to the bbox | **CC BY 4.0** (mirror metadata; CHC data policy) | 0.05°; 1981-01 → latest (2026-08 at build); last 2–3 months provisional | 25 |
+| temperature | **CHIRTS-ERA5** daily Tmax/Tmin, 0.05°, same mirror; Tmean = (Tmax+Tmin)/2 | **CC BY 4.0** | 0.05°; 1981-01 → latest | 25 |
+| spi3 | **SPI-3** computed from the CHIRPS monthly stack (method in §3) | derived from CHIRPS (CC BY 4.0) | 0.05°; 1981-03 → latest; calibration 1991–2020 | 26 |
 | (not hosted) | **RAISG Indigenous territories** — deliberately not redistributed: RAISG's use licence requires non-profit use and *unaltered* data, and the layer includes PIACI territories; the app's About panel links to RAISG's own map instead | RAISG use licence agreement | — | — |
 
 ## 2. Notes
@@ -121,7 +124,33 @@ the papers.
   measurement; display tiles are averaged to ~38 m at z12 while clicks read the native 10 m
   raster; the upstream per-pixel SD layer is not served in v1.
 
-## 3. GEDI method (draft — Phase 2 will finalise with the pilot/full-run numbers)
+- **Climate module (steps 25–26).** Data come from the Hugging Face zarr mirrors (global, daily,
+  int16-scaled) of UCSB CHC's CHIRPS v3.0 and CHIRTS-ERA5; the browser only ever reads the small
+  clipped monthly/annual stacks and per-cell binary series. The 1991–2020 normal is the baseline
+  for anomalies and the SPI calibration. The latest 2–3 CHIRPS months are provisional and marked
+  so in the map legend, time label, click panel and charts (dashed). River cells (≥50 % GEOBOSQUES
+  Hidrografía per 0.05° cell) are faded on the map and excluded from department means.
+  **Seasons:** only "annual" is built so far — the wet/dry season months are a pending decision
+  from the 1991–2020 monthly climatology (`series/climatology_dept.json`): Nov–Mar ≥ 246 mm/month,
+  Jun–Aug 61–78 mm/month, Tmean nearly flat (~28–30 °C) year-round.
+
+## 3. Methods
+
+### SPI-3 (step 26, ported unchanged from the Lake Victoria app)
+
+3-month rolling precipitation totals (label = window end month); per cell and calendar month a
+gamma distribution is fitted to the 1991–2020 calibration totals with the **Thom (1958)**
+approximation; the zero-rain probability is handled as a mixed distribution
+(q₀ + (1−q₀)·GammaCDF); SPI is the standard normal quantile of that probability, **clamped to
+[−3, 3]** and **stored ×0.01** (int16). The index follows **McKee, Doesken & Kleist (1993)**;
+the class names shown in the app follow **WMO (2012)**: ≤ −2.0 extremely dry, −1.5 to −1.99
+severely dry, −1.0 to −1.49 moderately dry, −0.99 to 0.99 near normal (and the wet mirror
+classes). QC: per-calendar-month window normals and zero-rain probabilities are stored
+(`spi3_qc.tif`); cells with a window normal < 30 mm or q₀ > 20 % get a "statistically fragile"
+warning in the click panel — rare in Ucayali's climate, relevant mainly in the dry-season
+windows of the Andean fringe.
+
+### GEDI (draft — Phase 2 will finalise with the pilot/full-run numbers)
 
 - **Product.** GEDI L2A Geolocated Elevation and Height Metrics, **v002**, NASA LP DAAC
   (C2142771958-LPCLOUD). The paper's Data Availability links v001 (p.20); v002 is the current
@@ -227,6 +256,18 @@ the papers.
   doi:10.3390/rs18132075 (CC BY; studies card — Ucayali migration p.17, authors' caveats pp.22–23).
 - Santini, W. SWAT-Amazon v1.0 (github.com/william-santini/SWAT-Amazon, commit 231c5e5 in
   bibliography) — model framework card only; nothing from it is displayed.
+- Funk, C., et al. (2015). The climate hazards infrared precipitation with stations—a new
+  environmental record for monitoring extremes. *Scientific Data* 2:150066. (CHIRPS; v3.0 from
+  the UCSB Climate Hazards Center, CC BY 4.0.)
+- Funk, C., et al. (2019). A High-Resolution 1983–2016 Tmax Climate Data Record Based on Infrared
+  Temperatures and Stations by the Climate Hazard Center. *J. Climate* 32:5639–5658.
+  (CHIRTS; the CHIRTS-ERA5 extension from UCSB CHC.)
+- McKee, T.B., Doesken, N.J. & Kleist, J. (1993). The relationship of drought frequency and
+  duration to time scales. *8th Conference on Applied Climatology*, 179–184. (The SPI.)
+- WMO (2012). Standardized Precipitation Index User Guide (M. Svoboda, M. Hayes, D. Wood).
+  WMO-No. 1090, Geneva. (The SPI class names used in the app.)
+- Thom, H.C.S. (1958). A note on the gamma distribution. *Monthly Weather Review* 86:117–122.
+  (The gamma-fit approximation in the SPI computation.)
 - Story transcriptions: `data/series/cooley_tables.json` carries Tables 2a/3a/4a values verbatim
   (its `source` field names the tables and pages); the story quotes those plus sect. 2.1 p.4,
   sect. 2.2 p.5, Table 1 pp.7–10, sect. 2.4 pp.11–12, sect. 3.1–3.2 p.13, Fig. 6 p.15,

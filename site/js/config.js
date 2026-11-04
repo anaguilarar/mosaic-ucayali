@@ -11,7 +11,7 @@ const LOCAL_DATA = "../data/";
 /* served from GitHub Pages: folder prefixes (ending in "/") or single files. GitHub refuses files over
    100 MB: keep an eye on tile sizes (pipeline 91_publish_check.py reports them) and move anything close
    to the limit off this list so it falls back to Hugging Face. */
-export const SITE = ["meta/", "series/", "vectors/", "figures/", "fonts/",
+export const SITE = ["meta/", "series/", "vectors/", "figures/", "fonts/", "climate/",
                      "tiles/osm_basemap.pmtiles", "tiles/terrain.pmtiles", "tiles/s2_rgb.pmtiles"];
 
 const choice = new URLSearchParams(location.search).get("data");

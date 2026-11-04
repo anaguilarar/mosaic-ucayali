@@ -70,6 +70,7 @@ export async function activate(id) {
   }
   const years = get(state.reg, d.yearsKey) || [];
   if (!years.includes(state.year[id])) state.year[id] = years[years.length - 1];
+  for (const x of ["segVar", "segSeason", "segMode"]) $("#" + x).hidden = true;   // climate's controls
   const sl = $("#yearSlider");
   sl.min = 0; sl.max = years.length - 1; sl.step = 1; sl.value = years.indexOf(state.year[id]);
   timebar.hidden = false;
