@@ -74,11 +74,13 @@
   {
    "id": "gedi",
    "title": "A laser from the Space Station",
-   "status": "pending",
-   "placeholder": "Waiting for the GEDI processing: the footprint map and this app's own filter counts arrive when the full-mission GEDI run lands (steps 10–13 of the pipeline).",
-   "text": "NASA's GEDI lidar, mounted on the International Space Station, fires laser pulses that return the vertical structure of the forest in 25 m footprints — through the haze and between the clouds that defeat optical satellites. Cooley et al. kept only the most reliable shots: full-power beams, beam sensitivity of at least 0.9, and ground elevations that five of six algorithms agreed on to within 2 m.",
-   "visual": { "layers": ["canopy"], "camera": { "lng": -74.7, "lat": -8.8, "zoom": 8.5, "pitch": 0 } },
+   "text": "NASA's GEDI lidar, mounted on the International Space Station, fires laser pulses that return the vertical structure of the forest in 25 m footprints — through the haze and between the clouds that defeat optical satellites. Cooley et al. kept only the most reliable shots: full-power beams, beam sensitivity of at least 0.9, and ground elevations that five of six algorithms agreed on to within 2 m. Run again by this app over a box around the department (April 2019 – July 2025), those three filters keep about 18 % of the full-power shots. The map shows the ones inside the department that also pass GEDI's own quality flags: each dot is one footprint, coloured by its height.",
+   "visual": { "layers": ["gedi"], "camera": { "lng": -75.2, "lat": -8.9, "zoom": 10.2, "pitch": 0 } },
    "numbers": [
+    { "value": "5.25 of 29.1 million", "label": "full-power GEDI shots over a box around the department that pass the paper's three filters, April 2019 – July 2025",
+      "source": { "kind": "app", "method": "GEDI02_A v002 Harmony subsets filtered as in Cooley et al. (2024), sect. 2.4 (pipeline steps 11–12)" } },
+    { "value": "1.5 million", "label": "of them inside the department that also pass GEDI's quality flags — the dots on the map",
+      "source": { "kind": "app", "method": "strict set: plus quality_flag = 1 and degrade_flag = 0 (pipeline step 14)" } },
     { "value": "25 m", "label": "diameter of one GEDI footprint on the ground",
       "source": { "kind": "study", "citation": "Cooley et al. (2024), Fig. 6", "page": "p.15" } },
     { "value": "≥ 0.9 · ≤ 2 m", "label": "beam sensitivity threshold · allowed ground-elevation spread among the five best algorithms",
@@ -86,7 +88,8 @@
    ],
    "sources": [
     "GEDI L2A product and filters: Cooley et al. (2024), sect. 2.4, pp.11–12; Dubayah et al. (2020).",
-    "This app uses GEDI02_A v002 (the paper's data link is v001) — see the data report."
+    "This app uses GEDI02_A v002 (the paper's data link is v001) — see the data report.",
+    "Shot counts and the footprint map: this app's analysis; the GEDI archive has no shots from April 2023 to April 2024."
    ]
   },
   {

@@ -1,5 +1,5 @@
-/* Thematic layers: land cover (MapBiomas C4), canopy height (ETH 2020), forest loss (GEOBOSQUES),
-   active-fire density (VIIRS) and burned area (MapBiomas fuego). Per-year tile sets share the
+/* Thematic layers: land cover (MapBiomas C4), canopy height (ETH 2020), GEDI RH95 (1 km grid +
+   footprint dots), forest loss (GEOBOSQUES), active-fire density (VIIRS) and burned area (MapBiomas fuego). Per-year tile sets share the
    year slider (#timebar); static sets (canopy, forest loss) hide it. Legends and the click panel
    are fed from the registry, the series JSONs and the two query COGs (geotiff.js). */
 
@@ -17,7 +17,10 @@ const DEFS = {
   burned_area: { prefix: "burned-", urlKey: ["burned_area", "urls", "tiles"], yearsKey: ["burned_area", "years"] },
   canopy: { static: true, layerId: "canopy-tiles", urlKey: ["canopy", "urls", "tiles"] },
   forest_loss: { static: true, layerId: "loss-tiles", urlKey: ["forest_loss", "urls", "tiles"] },
+  gedi: { static: true, layerId: "gedi-grid-tiles", urlKey: ["gedi", "urls", "grid_tiles"], extra: ["gedi-fp"] },
 };
+// GEDI footprints coloured on the canopy ramp (rh95 in decimetres)
+const GEDI_RAMP = [0, "#f0eee1", 50, "#cdd5ab", 100, "#9bbc86", 200, "#579a66", 300, "#1f704a", 400, "#06422b"];
 const get = (o, path) => path.reduce((a, k) => (a ? a[k] : undefined), o);
 
 export function layersFor(registry, pmUrl) {
@@ -33,6 +36,18 @@ export function layersFor(registry, pmUrl) {
     if (!u) continue;
     if (d.static) add(d.layerId, u, 0.85);
     else for (const [y, f] of Object.entries(u)) add(d.prefix + y, f, d.prefix === "lulc-" ? 0.8 : 0.85);
+  }
+  const fp = registry.gedi?.urls?.footprints;
+  if (fp) {
+    // the 1 km grid fades as the footprints take over
+    const grid = layers.find((l) => l.id === "gedi-grid-tiles");
+    if (grid) grid.paint["raster-opacity"] = ["interpolate", ["linear"], ["zoom"], 9, 0.85, 11, 0.3];
+    sources["gedi-fp"] = { type: "vector", url: pmUrl(fp) };
+    layers.push({ id: "gedi-fp", type: "circle", source: "gedi-fp", "source-layer": "footprints",
+      minzoom: registry.gedi.footprints_from_zoom ?? 9, layout: { visibility: "none" },
+      paint: { "circle-radius": ["interpolate", ["exponential", 2], ["zoom"], 9, 1.3, 13, 2.6, 18, 21],
+               "circle-color": ["interpolate", ["linear"], ["get", "rh95"], ...GEDI_RAMP],
+               "circle-stroke-color": "rgba(16,32,24,0.55)", "circle-stroke-width": 0.5 } });
   }
   return { sources, layers };
 }
@@ -76,6 +91,7 @@ export async function activate(id) {
   if (d.static) {
     timebar.hidden = true;
     setVisibility(map, d.layerId, "visible");
+    for (const x of d.extra || []) setVisibility(map, x, "visible");
     renderLegend();
     return;
   }
@@ -95,6 +111,7 @@ export function deactivate() {
   if (!state.active) return;
   if (!map) { state.active = null; return; }
   for (const d of Object.values(DEFS)) {
+    for (const x of d.extra || []) setVisibility(map, x, "none");
     if (d.static) setVisibility(map, d.layerId, "none");
     else for (const y of Object.keys(get(state.reg, d.urlKey) || {})) setVisibility(map, d.prefix + y, "none");
   }
@@ -177,6 +194,14 @@ function renderLegend() {
       "Lang et al. (2023) · CC BY 4.0 · model estimate; clicks read the 10 m raster",
       { colors: ["#f0eee1", "#cdd5ab", "#9bbc86", "#579a66", "#1f704a", "#06422b"],
         left: "0 m", right: `≥ ${reg.ramp?.max_m ?? 40} m` });
+  } else if (state.active === "gedi") {
+    const c = reg.counts || {};
+    legendBox("GEDI canopy height (RH95)", [],
+      `${(c.shots_in_department ?? 0).toLocaleString("en-US")} footprints, ${c.first ?? ""} to ${c.last ?? ""} · `
+      + "zoomed out: 1 km mean; from zoom 9: one dot per 25 m footprint (a sample at zooms 9–10) · "
+      + "strict quality set, this app's analysis · NASA GEDI L2A v002",
+      { colors: ["#f0eee1", "#cdd5ab", "#9bbc86", "#579a66", "#1f704a", "#06422b"],
+        left: "0 m", right: `≥ ${reg.ramp?.max_m ?? 40} m` });
   } else if (state.active === "forest_loss") {
     const rows = Object.values(reg.classes || {}).map((c) => [c.color, `${c.name_en} · ${c.name_es}`]);
     legendBox("Forest & loss (GEOBOSQUES)", rows,
@@ -248,6 +273,39 @@ async function showPanel(lngLat, open) {
         <div class="value num">${ok ? v : "no data"} <span class="unit">${ok ? "m" : ""}</span></div></div>
       <div><div class="label">Product</div><div class="value" style="font-size:15px">ETH 10 m (GEDI + Sentinel-2)</div></div>
       <div><div class="label">Licence</div><div class="value" style="font-size:15px">CC BY 4.0</div></div>`));
+    body.append(el("p", "meta", reg.caveats || ""));
+  } else if (state.active === "gedi") {
+    const p = map.project(lngLat);
+    const hits = map.getLayer("gedi-fp")
+      ? map.queryRenderedFeatures([[p.x - 8, p.y - 8], [p.x + 8, p.y + 8]], { layers: ["gedi-fp"] }) : [];
+    let fp = null, best = Infinity;
+    for (const h of hits) {
+      const q = map.project({ lng: h.geometry.coordinates[0], lat: h.geometry.coordinates[1] });
+      const d2 = (q.x - p.x) ** 2 + (q.y - p.y) ** 2;
+      if (d2 < best) { best = d2; fp = h.properties; }
+    }
+    const mean = await valueAt(lngLat, reg.urls.query, 0);
+    const n = await valueAt(lngLat, reg.urls.query, 1);
+    const cell = mean != null && mean !== -32768;
+    const m = (dm) => (dm / 10).toFixed(1);
+    const day = (i) => `${String(i).slice(0, 4)}-${String(i).slice(4, 6)}-${String(i).slice(6, 8)}`;
+    const tall = (fp && fp.rh95 > 600) || (cell && mean > 600);
+    $("#cellTitle").textContent = fp ? "GEDI footprint" : `GEDI at ${window.fmtCoord(lngLat.lat, lngLat.lng)}`;
+    $("#cellHint").textContent = reg.source;
+    body.append(el("div", "kpis", (fp ? `
+      <div class="lead"><div class="label">RH95 · this footprint</div>
+        <div class="value num">${m(fp.rh95)} <span class="unit">m</span></div></div>
+      <div><div class="label">RH50</div><div class="value num" style="font-size:17px">${m(fp.rh50)} <span class="unit">m</span></div></div>
+      <div><div class="label">Date</div><div class="value num" style="font-size:17px">${day(fp.date)}</div></div>` : "") + `
+      <div${fp ? "" : ' class="lead"'}><div class="label">Mean RH95 · 1 km cell</div>
+        <div class="value num"${fp ? ' style="font-size:17px"' : ""}>${cell ? m(mean) : "no shots"} <span class="unit">${cell ? "m" : ""}</span></div></div>
+      <div><div class="label">Shots in the cell</div><div class="value num" style="font-size:17px">${cell ? n : 0}</div></div>`));
+    const c = reg.counts || {};
+    const share = c.shots_in_department ? (100 * c.rh95_over_60m / c.shots_in_department).toFixed(2) : null;
+    if (tall) body.append(el("p", "meta", "Above 60 m: taller than this forest is expected to grow. "
+      + (share ? `${share} % of the shots report RH95 above 60 m; ` : "")
+      + "most are probably noise or atmospheric returns that passed the filters."));
+    if (!fp) body.append(el("p", "meta", "Zoom in to 9 or closer and click a dot to read one footprint."));
     body.append(el("p", "meta", reg.caveats || ""));
   } else if (state.active === "forest_loss") {
     $("#cellTitle").textContent = "Forest & loss · Ucayali";

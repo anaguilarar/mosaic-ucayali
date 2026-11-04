@@ -86,6 +86,7 @@ python scripts\common.py verify
 | 11_gedi_subset | Harmony spatial+variable subsets, per month | Earthdata login | pilot month ~10–60 min wall (Harmony queue); full period = 33 such jobs | work/gedi/subsets/YYYY-MM/*.h5 |
 | 12_gedi_filter | filters → Parquet per granule | step 11 | minutes per month | work/gedi/parquet/ |
 | 13_gedi_stats | shots vs Cooley polygons, projections | steps 05+12 | ~1 min | work/gedi/stats.json |
+| 14_gedi_layers | strict-set footprint vector tiles + 1 km RH95 grid (inside the department) | steps 01+12 | ~1 min, < 1 GB | data/tiles/gedi_footprints.pmtiles, gedi_grid.pmtiles; data/query/gedi_rh95_1km.tif |
 | 91_publish_check | sizes, SITE vs HF split, secret scan | — | seconds | console (exit 1 on blockers) |
 
 ## How to resume

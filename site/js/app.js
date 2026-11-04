@@ -25,6 +25,8 @@ const OVERLAYS = [
     file: "vectors/veg_classes.geojson", regKey: "veg_classes", swatch: "#55a05f" },
   { id: "canopy", group: "Vegetation", title: "Canopy height", type: "thematic",
     regKey: "canopy", swatch: "#1f704a" },
+  { id: "gedi", group: "Vegetation", title: "GEDI lidar canopy height", type: "thematic",
+    regKey: "gedi", swatch: "#579a66" },
   { id: "landcover", group: "Land", title: "Land cover", type: "thematic",
     regKey: "landcover", swatch: "#e49635" },
   { id: "forest_loss", group: "Land", title: "Forest loss", type: "thematic",
@@ -227,6 +229,7 @@ function renderLegend(id) {
 function updateAttrib() {
   const names = { veg_classes: " · Cooley et al. (2024) vegetation typologies (CC0)",
                   canopy: " · ETH canopy height 2020 (CC BY 4.0)",
+                  gedi: " · NASA GEDI L2A v002",
                   landcover: " · MapBiomas Perú C4 (CC BY 4.0)",
                   forest_loss: " · GEOBOSQUES (MINAM/SERFOR)",
                   fire: " · NASA FIRMS VIIRS", burned_area: " · MapBiomas fuego (CC BY 4.0)",

@@ -17,7 +17,7 @@ the papers.
 | admin_boundaries | `DISTRITOS_LIMITES.zip`, resource of the IGN dataset "Limites Departamentales", datosabiertos.gob.pe (dataset id 6c5c52fd-047d-4ba7-9ac7-3865860118c2); provinces dissolved from districts | **ODC-By** (stated twice on the dataset page: "Licencia" block and DCAT table) | 1:100,000; same release | 01 (portal refuses non-browser downloads — fetch the zip in a browser into `<work>/downloads/`, step 01 then uses it) |
 | osm_labels | Protomaps daily OSM basemap extract (build date in config), labels only | **ODbL 1.0** — © OpenStreetMap contributors; fonts Noto Sans (SIL OFL) | vector, z0–12; OSM as of build date | 04 (needs the go-pmtiles CLI; pending) |
 | veg_classes | Cooley et al., "Vegetation typology classification and data set in Ucayali, Peru", v4.0, CaltechDATA, doi:10.22002/D1.2318 (files `_VegTypol_Ucayali_v4__Feb2022.geojson` + README PDF) | **CC0** ("cc-zero" on the record page) | 324 polygons digitised on 2020/2021 imagery (MAXAR 2020; Google Earth/Bing ~2015–2019, Planet-verified) | 05 |
-| (phase 2) gedi_* | GEDI02_A v002, NASA LP DAAC (collection C2142771958-LPCLOUD), via Harmony subsets | NASA Earth science data: free and open; cite the product DOI | 25 m footprints; mission window 2019-04 → latest (replication = date filter) | 10–13 |
+| gedi | GEDI02_A v002, NASA LP DAAC (collection C2142771958-LPCLOUD), via Harmony subsets; map products from the **strict** set inside the department: footprint vector tiles + 1 km mean-RH95 grid (this app's analysis) | NASA Earth science data: free and open; cite the product DOI | 25 m footprints, 2019-04-20 → 2025-07-09 (no shots 2023-04 → 2024-04); replication window = date filter | 10–14 |
 | forest_loss | **GEOBOSQUES** (MINAM PNCBMCC + SERFOR/MIDAGRI) "Mapa del Bosque Húmedo Amazónico Peruano 2000–2024": the combined national raster (EPSG:32718, 30 m; classes Hidrografía / Bosque 2024 / Pérdida 2001–2024 / No Bosque 2000 / No Monitoreado), downloaded manually in a browser (the site 403s scripts) | the product metadata's **LICENCIA field is "-"** (no licence stated); CITACIÓN required: "MINAM (PNCBMCC) y MIDAGRI (SERFOR). 'Mapa del Bosque Húmedo Amazónico Peruano, 2000–2024'. Acceso a través de GEOBOSQUES." | 30 m; baseline 2000, loss 2001–2024 lumped — **the separate annual loss raster (year field) is still to be downloaded** for the loss-year layer and the annual series | 20 |
 | landcover | **MapBiomas Perú Collection 4**, 30 m, years 2000/2005/2010/2015/2020/2024 (collection spans 1985–2025). The published storage.googleapis.com links answer **403 server-side** (verified 2026-11-04 — even their collection-3 links fail; anonymous GCS works for other buckets): files come via `prep/gee_mapbiomas_export.js` (MapBiomas' own public GEE assets) or the MapBiomas platform | **CC BY 4.0** — "Los datos de MapBiomas son de uso público, abierto y gratuito, sujetos a citación" (site footer) | 30 m; served years above | 21 (awaiting files) |
 | canopy | **ETH Global Canopy Height 2020** (Lang et al. 2023), six 3° COG tiles from the dataset's own file share (libdrive.ethz.ch, pointed to by ETH Research Collection record 10.3929/ethz-b-000609802; the record's HTML page currently errors, the share works) | **CC BY 4.0** (ETH record) | 10 m, 2020; display tiles z≤12, clicks on the 10 m raster | 22 |
@@ -188,7 +188,7 @@ classes). QC: per-calendar-month window normals and zero-rain probabilities are 
 warning in the click panel — rare in Ucayali's climate, relevant mainly in the dry-season
 windows of the Andean fringe.
 
-### GEDI (draft — Phase 2 will finalise with the pilot/full-run numbers)
+### GEDI
 
 - **Product.** GEDI L2A Geolocated Elevation and Height Metrics, **v002**, NASA LP DAAC
   (C2142771958-LPCLOUD). The paper's Data Availability links v001 (p.20); v002 is the current
@@ -251,6 +251,47 @@ windows of the Andean fringe.
   month): replication window 650 granules / 33 months ≈ **3.1 GB subsets, ~3.3 h**, Parquet
   ≈ 0.4 GB; mission window 1,195 granules / 63 months ≈ **5.6 GB subsets, ~6.5 h**, Parquet
   ≈ 0.8 GB. Comfortably within the work-disk budget.
+- **Full run (server, mission window, finished 2026-11-04; copied back and step 13 re-run on the
+  laptop with identical results).** 63 months with data, 2019-04 → 2025-07 (none 2023-04 →
+  2024-04); 6.6 GB of subsets (104 MB per month), 1,126 Parquet files with shots, 0.87 GB.
+  Filter stages over the department bbox (shots, cumulative): in subsets **29,134,965** (power
+  beams only); 0.9 ≤ sensitivity ≤ 1.0 **17,157,197**; ground-elevation agreement
+  **5,250,300** = the paper set (18.0 % of the subset shots); strict set **3,858,844**. Inside
+  the department: **1,506,194** strict shots (first 2019-04-20, last 2025-07-09).
+- **Replication window vs the paper (this app's analysis; paper set, 2019-04-18 → 2021-12-31,
+  shots inside the polygons; RH95 = GEDI's own rh[95], i.e. untransformed).**
+
+  | Class | n (this app) | n within 65 m rule | mean RH95 (sd) this app | paper n, Table 2a | paper mean RH95: Table 2a (ground returns removed) / Table 2b (untransformed) |
+  |---|---|---|---|---|---|
+  | Bosque_de_colina_baja (mature) | 9,697 | 9,570 | 31.46 m (7.41) | 2,063 | 29.55 / 29.40 m |
+  | Bosque_secundario_o_degradado | 299 | 200 | 20.50 m (9.70) | 282 | 21.25 / 20.82 m |
+  | Purma | 46 | 17 | 5.83 m (3.61) | 46 | 6.33 m / — (2b not transcribed) |
+
+  Purma's count matches the paper exactly and secondary forest is within 6 % (and 0.3 m of
+  Table 2b) when shots are counted **inside** the polygons, not within the eroded 65 m area: the
+  paper's table counts appear to be inside-polygon counts, with the 65 m rule as its sensitivity
+  check (Fig. 7) — an inference, the paper does not say so. **Mature forest does not
+  replicate**: 4.7× the paper's footprints, and 2.1 m taller than Table 2b (1.9 m than Table 2a). Not explained by tall
+  outliers (13 mature shots above 60 m; mean without them 31.40 m); the paper does not state its
+  acquisition period, which may have been shorter, or it may have subsampled the 12 large mature
+  polygons. Do not quote the mature numbers next to the paper's without this caveat.
+  Classes the paper did not analyse also receive shots (Aguajales 193, mean 28.39 m;
+  Bosque_inundado 4; Bosque_de_colina_alta 1,667, 25.81 m; Pastizales 39) — QA only.
+  Strict-set and mission-window equivalents are in `work/gedi/stats.json`.
+- **Tall outliers.** 2,247 strict shots in the department (0.15 %) report RH95 > 60 m (up to
+  137 m; RH50 typically ~20 m; mostly dry-season months) — probably noise or atmospheric returns
+  that pass the paper's filters. They are kept (the paper sets no height cap); the click panel
+  flags any footprint or 1 km cell above 60 m. A cap would be a deviation from the paper's
+  filters and is left as a decision.
+- **Map products (step 14; this app's analysis, strict set, mission window, inside the
+  department).** `gedi_footprints.pmtiles` (17.2 MB): point vector tiles, layer `footprints`
+  with rh95 and rh50 in decimetres (negatives set to 0) and the date (yyyymmdd); every shot at
+  z11 (overzoomed beyond), a fixed random sample of 1 in 4 at z10 and 1 in 16 at z9.
+  `gedi_rh95_1km.tif` (0.2 MB): 0.01° grid, band 1 mean RH95 (dm, int16, encoding-guarded),
+  band 2 shot count; 76,755 cells with shots, median 16 shots per cell; cells kept when their
+  centre is inside the department. `gedi_grid.pmtiles` (0.7 MB): display tiles of the grid
+  (z5–9, nearest, the canopy ramp 0–40 m). In the app the grid fades out between zooms 9 and 11
+  as the footprints take over.
 
 ## 4. References
 

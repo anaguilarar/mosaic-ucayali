@@ -319,6 +319,35 @@
    "licence": "Derived from CHIRPS v3.0 (CC-BY-4.0)",
    "caveats": "The latest 2-3 CHIRPS months are provisional; class names follow WMO (2012).",
    "citation": "McKee, Doesken & Kleist (1993), 8th Conf. Applied Climatology; classes: WMO (2012), SPI User Guide, WMO-No. 1090; Funk et al. (2015), Sci. Data 2:150066"
+  },
+  {
+   "id": "gedi",
+   "title": "GEDI canopy height (RH95)",
+   "group": "Vegetation",
+   "type": "thematic",
+   "urls": {
+    "footprints": "tiles/gedi_footprints.pmtiles",
+    "grid_tiles": "tiles/gedi_grid.pmtiles",
+    "query": "query/gedi_rh95_1km.tif"
+   },
+   "minzoom": 5,
+   "footprints_from_zoom": 9,
+   "ramp": {
+    "max_m": 40
+   },
+   "counts": {
+    "shots_in_department": 1506194,
+    "rh95_over_60m": 2247,
+    "grid_cells": 76755,
+    "first": "2019-04-20",
+    "last": "2025-07-09"
+   },
+   "source": "NASA GEDI L2A (GEDI02_A v002), full-power beams; the paper's filters (Cooley et al. 2024, sect. 2.4) plus quality_flag = 1 and degrade_flag = 0 (this app's strict set)",
+   "period": "2019-04-20 to 2025-07-09 (no shots April 2023 - April 2024: GEDI hibernation)",
+   "units": "RH95: height above the ground at which 95 % of the returned energy is reached, m",
+   "licence": "NASA Earth science data: free and open; cite the product DOI",
+   "citation": "Dubayah, R., Hofton, M., Blair, J., Armston, J., Tang, H. & Luthcke, S. (2021). GEDI L2A Elevation and Height Metrics Data Global Footprint Level V002. NASA EOSDIS Land Processes DAAC. doi:10.5067/GEDI/GEDI02_A.002",
+   "caveats": "This app's analysis. Each dot is one 25 m footprint, located to about \u00b110 m. Zoomed out, a 1 km grid shows the mean RH95 of the shots in each cell; at zooms 9-10 the dots are a random sample. RH95 is GEDI's own value (no ground-return transformation, unlike the paper's Table 2a)."
   }
  ]
 }

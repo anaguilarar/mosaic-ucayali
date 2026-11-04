@@ -41,6 +41,8 @@ Step '21' 'land cover (MapBiomas)'   @('scripts/21_landcover.py')
 Step '22' 'canopy height (ETH)'      @('scripts/22_canopy_height.py')
 Step '23' 'protected areas'          @('scripts/23_protected_areas.py')
 Step '24' 'fires (VIIRS + MapBiomas)' @('scripts/24_fires.py')
+Step '25' 'climate (CHIRPS, CHIRTS)'  @('scripts/25_climate.py')
+Step '26' 'drought (SPI-3)'           @('scripts/26_spi.py')
 
 if (-not $SkipGedi) {
   Step '10' 'gedi search'   @('scripts/10_gedi_search.py', '--window', $GediWindow)
@@ -51,6 +53,7 @@ if (-not $SkipGedi) {
   }
   Step '12' 'gedi filter'   @('scripts/12_gedi_filter.py')
   Step '13' 'gedi stats'    @('scripts/13_gedi_stats.py')
+  Step '14' 'gedi layers'   @('scripts/14_gedi_layers.py')
 }
 
 if (Wanted '91') { python scripts/91_publish_check.py --area $Area }
