@@ -115,7 +115,8 @@ def main():
                     f"  3. or retry later in case MapBiomas fixes the bucket ACL.\n"
                     f"Then re-run this step.")
                 return
-        clip = clip_source(nat, f"lulc_{y}", common.bbox())
+        clip = common.mask_to_department(clip_source(nat, f"lulc_{y}", common.bbox()),
+                                         common.WORK / f"lulc_{y}_dept.tif", nodata=0)
         clipped[y] = clip
         a = common.class_areas_km2(clip, zones)["Ucayali"]
         areas[str(y)] = a

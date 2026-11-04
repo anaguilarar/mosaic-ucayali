@@ -101,12 +101,24 @@ the papers.
   detection from 25 % cover loss). PRECAUCIONES: "La pérdida de bosques integra las pérdidas
   naturales y antrópicas" (loss ≠ deforestation alone) and river-channel-migration losses are
   excluded. Coverage is the Bosque Húmedo Amazónico monitoring area only ("No Monitoreado"
-  elsewhere — relevant at the Andean fringe of Padre Abad). Display note: the zoom-out pyramid
-  keeps each block's highest-priority class (loss > non-forest > forest > water), so any loss in
-  a pixel stays visible when zoomed out; class codes are remapped accordingly (step 20).
-  Department class areas (this app's analysis): forest remaining 91,159 km², loss 2001–2024
-  6,054 km², non-forest 2000 5,204 km², water 2,742 km²; Purús is nearly untouched (30 km² loss)
-  while Padre Abad lost 2,154 km².
+  elsewhere). **Codes (the raster's own value attribute table, field "Cobertura") and 30 m
+  pixel counts inside the department** (this app's analysis):
+
+  | Code | Cobertura | Display | Pixels | km² |
+  |---|---|---|---|---|
+  | 1 | Hidrografía | water | 3,046,378 | 2,742 |
+  | 2 | Bosque 2024 | forest remaining | 101,287,300 | 91,159 |
+  | 3 | Pérdida 2001–2024 | loss | 6,727,189 | 6,054 |
+  | 4 | No Bosque 2000 | non-forest at baseline | 5,781,933 | 5,204 |
+  | 5 | No Monitoreado | **transparent** | 67 | 0.06 |
+
+  Loss is 5.76 % of the mapped department (codes 1–4). **Display:** nearest warp and
+  nearest-sampled overviews — each zoomed-out pixel samples one 30 m cell, so classes keep their
+  true share at every zoom (measured from the tiles: loss 5.67–5.75 % at z5–z12). An earlier
+  max-aggregation pyramid let loss win at low zoom and, together with the bbox clip, painted the
+  heavily deforested Huánuco side west of the department solid red; mode overviews were tried
+  and under-showed loss (3.1–3.7 % at z5–z7). Purús is nearly untouched (30 km² loss) while
+  Padre Abad lost 2,154 km².
 - **SERNANP terms (verbatim excerpts, viewer "TERMINOS Y CONDICIONES", fetched 2026-11-04):**
   "La información publicada en esta página web es de dominio público y no podrá ser comercializada
   por terceros con fines lucrativos" and "…están autorizadas siempre que referencie al SERNANP
@@ -130,9 +142,20 @@ the papers.
   for anomalies and the SPI calibration. The latest 2–3 CHIRPS months are provisional and marked
   so in the map legend, time label, click panel and charts (dashed). River cells (≥50 % GEOBOSQUES
   Hidrografía per 0.05° cell) are faded on the map and excluded from department means.
-  **Seasons:** only "annual" is built so far — the wet/dry season months are a pending decision
-  from the 1991–2020 monthly climatology (`series/climatology_dept.json`): Nov–Mar ≥ 246 mm/month,
-  Jun–Aug 61–78 mm/month, Tmean nearly flat (~28–30 °C) year-round.
+  **Seasons** (from the 1991–2020 department climatology, `series/climatology_dept.json`): the
+  app uses a **core wet season (Jan–Mar)** and a **core dry season (Jun–Aug)**, alongside annual
+  values. Nov–Dec are also wet (≥ 246 mm/month in the 1991–2020 normals); the core seasons are
+  three months each within one calendar year. (Monthly normals, mm: Jan 273, Feb 258, Mar 273,
+  Apr 196, May 132, Jun 78, Jul 61, Aug 69, Sep 113, Oct 191, Nov 246, Dec 260; Tmean ~28–30 °C
+  year-round — rainfall alone defines the seasons. This app's analysis.)
+- **Outside the department.** Every raster layer served for query (canopy 10 m COG) and every
+  thematic tile set built from a bbox clip (GEOBOSQUES; MapBiomas when it lands) is masked to the
+  department boundary (pixel centre inside; nodata outside) by `common.mask_to_department`. The
+  map also draws an opaque outside mask above all data layers and below the outline and labels.
+  Terrain is the exception by design: its tiles are padded beyond the DEM with smoothly
+  extrapolated elevations (3D needs every visible tile); a bug left the padding's overviews
+  as NaN → 0 m blocks with cliffs at tile boundaries — fixed 2026-11-04 (overviews rebuilt after
+  the fill).
 
 ## 3. Methods
 

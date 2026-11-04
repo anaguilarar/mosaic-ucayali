@@ -182,6 +182,45 @@ def mbtiles_to_pmtiles(src: Path, dst: Path, maxzoom: int):
     log.info("wrote %s (%.1f MB)", dst, dst.stat().st_size / 1e6)
 
 
+# ----------------------------------------------------------------- department clip
+
+def department_geometry(crs="EPSG:4326"):
+    import geopandas as gpd
+    dept = gpd.read_file(INPUTS / CFG["inputs"]["department"]).to_crs(crs)
+    return dept.union_all()
+
+
+def mask_to_department(src_path, out_path, nodata, strip=1024):
+    """Copy a raster with every pixel outside the department set to `nodata`, strip by strip (the
+    raster is never whole in memory). Pixels are kept when their centre falls inside the boundary.
+    Returns out_path; skipped when out_path is newer than src_path."""
+    import numpy as np
+    import rasterio
+    from rasterio import features
+    src_path, out_path = Path(src_path), Path(out_path)
+    if fresh(out_path, src_path):
+        return out_path
+    with rasterio.open(src_path) as src:
+        geom = department_geometry(src.crs)
+        prof = src.profile | dict(nodata=nodata, tiled=True, blockxsize=512, blockysize=512,
+                                  compress="DEFLATE", BIGTIFF="IF_SAFER")
+        tmp = out_path.with_suffix(".tmp.tif")
+        with rasterio.open(tmp, "w", **prof) as dst:
+            for r0 in range(0, src.height, strip):
+                h = min(strip, src.height - r0)
+                win = rasterio.windows.Window(0, r0, src.width, h)
+                inside = features.rasterize([(geom, 1)], out_shape=(h, src.width),
+                                            transform=src.window_transform(win), fill=0,
+                                            dtype="uint8").astype(bool)
+                for b in range(1, src.count + 1):
+                    a = src.read(b, window=win)
+                    a[~inside] = nodata
+                    dst.write(a, b, window=win)
+    tmp.replace(out_path)
+    log.info("masked to the department: %s -> %s", src_path.name, out_path.name)
+    return out_path
+
+
 # ----------------------------------------------------------------- zonal class areas
 
 def class_areas_km2(raster_path, zones, strip=1024, band=1):

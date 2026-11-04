@@ -68,7 +68,7 @@ def main():
         log.info("department.geojson: %.0f kB", out.stat().st_size / 1e3)
 
         w, s, e, n = cfg["area"]["full_bbox"]
-        pad = 2.5                                              # beyond the terrain padding
+        pad = 6.0          # beyond the terrain padding (~2.7 deg) and the camera maxBounds in app.js
         world = Polygon([(w - pad, s - pad), (e + pad, s - pad), (e + pad, n + pad), (w - pad, n + pad)])
         mask = gpd.GeoDataFrame(geometry=[world.difference(simp.union_all())], crs="EPSG:4326")
         mask.to_file(vec / "department_mask.geojson", driver="GeoJSON")

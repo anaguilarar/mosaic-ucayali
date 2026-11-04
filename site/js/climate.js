@@ -35,7 +35,9 @@ function spiMonths() {
   });
 }
 const VAR_LABEL = { tmean: "Tmean (Tmax+Tmin)/2", tmax: "Tmax", tmin: "Tmin", precip: "Precipitation" };
-const SEASON_NAMES = { annual: "Annual", wet: "Wet", dry: "Dry" };
+/* button labels (short) and the full names used in the time label, legend and popups */
+const SEASON_NAMES = { annual: "Annual", wet: "Core wet (Jan–Mar)", dry: "Core dry (Jun–Aug)" };
+const SEASON_LONG = { annual: "annual", wet: "core wet season (Jan–Mar)", dry: "core dry season (Jun–Aug)" };
 
 const state = {
   meta: null, stacks: new Map(), normals: null, landmask: null,
@@ -159,7 +161,7 @@ async function refresh(resetSlider = true) {
   if (state.cell) showCell(state.cell.lngLat, false);
 }
 
-function seasonName() { return state.season === "annual" ? "annual" : state.season + " season"; }
+function seasonName() { return SEASON_LONG[state.season] || state.season; }
 
 async function refreshMonthly() {
   const months = spiMonths();
@@ -452,6 +454,15 @@ export async function showCell(lngLat, open = true) {
 }
 
 export function isActive() { return state.active != null; }
+
+/* jump the SPI-3 map to a month label ("2024-08"); used by story chips */
+export async function showMonth(label) {
+  if (state.active !== "spi3") return;
+  const i = spiMonths().indexOf(label);
+  if (i < 0) return;
+  state.month = i;
+  await refreshMonthly();
+}
 
 export function presetFromHash(h) {
   if (h.get("var")) state.v = h.get("var");

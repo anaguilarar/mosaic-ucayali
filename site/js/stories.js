@@ -150,7 +150,13 @@ function chapterEl(ch) {
     const row = el("div", "story-actions");
     for (const st of ch.visual.steps) {
       const chip = el("button", "story-chip", st.label);
-      chip.addEventListener("click", () => fly(st.camera));
+      chip.addEventListener("click", async () => {
+        if (st.layer && state.hooks.overlayAvailable(st.layer)) {
+          await state.hooks.setOverlay(st.layer);
+          if (st.time != null) await state.hooks.presetTime?.(st.layer, st.time);
+        }
+        if (st.camera) fly(st.camera);
+      });
       row.append(chip);
     }
     c.append(row);

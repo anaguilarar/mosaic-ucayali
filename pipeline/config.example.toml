@@ -60,3 +60,10 @@ variables = ['rh', 'sensitivity', 'quality_flag', 'degrade_flag', 'elev_lowestmo
 [memory]
 gdal_cachemax_mb = 512
 min_free_gb = 4          # memwatch stops a step cleanly below this much free RAM
+
+[climate]
+normal = [1991, 2020]
+# core seasons from the 1991-2020 department climatology (series/climatology_dept.json), three months
+# each within one calendar year; Nov-Dec are also wet (>= 246 mm/month) - see DATA_REPORT section 2
+wet_months = [1, 2, 3]       # "core wet season (Jan-Mar)"
+dry_months = [6, 7, 8]       # "core dry season (Jun-Aug)"

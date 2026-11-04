@@ -108,10 +108,17 @@ def main():
         files.append(common.download(BASE + name, common.WORK_ROOT / "downloads" / "eth_canopy" / name,
                                      timeout=7200))
     if args.force or not clip.exists():
-        log.info("mosaicking %d tiles clipped to %s", len(files), common.bbox())
-        mosaic_clip(files, common.bbox(), clip)
+        bbox_mosaic = common.WORK / "canopy_mosaic_bbox.tif"
+        if args.force or not bbox_mosaic.exists():
+            log.info("mosaicking %d tiles clipped to %s", len(files), common.bbox())
+            mosaic_clip(files, common.bbox(), bbox_mosaic)
+        if clip.exists():
+            clip.unlink()
+        common.mask_to_department(bbox_mosaic, clip, nodata=NODATA)    # nodata outside the boundary
+        with rasterio.open(clip, "r+") as ds:                           # overviews for remote range reads
+            ds.build_overviews([2, 4, 8, 16, 32, 64], Resampling.average)
         common.record("22_canopy_height", clip)
-        log.info("canopy_height_10m.tif: %.0f MB", clip.stat().st_size / 1e6)
+        log.info("canopy_height_10m.tif (department only): %.0f MB", clip.stat().st_size / 1e6)
 
     if args.force or not tiles_out.exists():
         merc = warp_to_mercator(clip, f"canopy_{common.AREA}", 12, Resampling.average,

@@ -57,6 +57,17 @@ export function init(mapRef) {
 
 export function isActive() { return state.active != null; }
 
+/* jump a per-year layer to a year; used by story chips */
+export function setYear(id, year) {
+  const d = DEFS[id];
+  if (!d || d.static || state.active !== id) return;
+  const years = get(state.reg, d.yearsKey) || [];
+  if (!years.includes(year)) return;
+  state.year[id] = year;
+  $("#yearSlider").value = years.indexOf(year);
+  applyYear(); label(); renderLegend();
+}
+
 export async function activate(id) {
   state.active = id;
   await ready;
@@ -121,7 +132,7 @@ async function loadPoints() {
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2, 13, 4.5],
                    "circle-color": "#e55064", "circle-opacity": 0.75,
                    "circle-stroke-color": "#7f1d2e", "circle-stroke-width": 0.5 } },
-          map.getLayer("labels-start") ? "labels-start" : undefined);
+          map.getLayer("dim") ? "dim" : undefined);              // under the outside mask
       } else {
         map.getSource("fire-points").setData(gj);
       }
@@ -169,8 +180,9 @@ function renderLegend() {
   } else if (state.active === "forest_loss") {
     const rows = Object.values(reg.classes || {}).map((c) => [c.color, `${c.name_en} · ${c.name_es}`]);
     legendBox("Forest & loss (GEOBOSQUES)", rows,
-      "30 m · MINAM/SERFOR · any loss within a pixel shows when zoomed out · loss includes "
-      + "natural losses, not only deforestation");
+      "30 m · MINAM/SERFOR · zoomed out, each pixel samples one 30 m cell, so every class keeps its "
+      + "true share · 'No Monitoreado' (outside the humid-Amazon monitoring area) is transparent · "
+      + "loss includes natural losses, not only deforestation");
   } else if (state.active === "fire") {
     const lg = reg.legend_steps || {};
     legendBox(`Active fires ${y} — density (S-NPP)`,
@@ -240,7 +252,8 @@ async function showPanel(lngLat, open) {
   } else if (state.active === "forest_loss") {
     $("#cellTitle").textContent = "Forest & loss · Ucayali";
     $("#cellHint").textContent = reg.source;
-    const annual = await series("forest_loss.json").catch(() => null);   // the annual product (year field)
+    // the annual product (year field) only exists once its raster is in the pipeline: no blind fetch
+    const annual = reg.urls?.loss_year ? await series("forest_loss.json").catch(() => null) : null;
     if (annual?.regions?.Ucayali) {
       const data = annual.regions.Ucayali;
       const years = Object.keys(data);

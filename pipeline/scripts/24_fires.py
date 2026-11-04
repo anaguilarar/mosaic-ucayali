@@ -111,7 +111,8 @@ def burned(args, dept_geom):
             else:
                 missing.append(y)
                 continue
-        clip = clip_source(nat, f"burned_{y}", common.bbox())
+        clip = common.mask_to_department(clip_source(nat, f"burned_{y}", common.bbox()),
+                                         common.WORK / f"burned_{y}_dept.tif", nodata=0)
         burned_km2[str(y)] = round(sum(common.class_areas_km2(clip, {"d": dept_geom})["d"].values()), 1)
         out = common.DATA / "tiles" / f"burned_{y}.pmtiles"
         if out.exists() and not args.force:

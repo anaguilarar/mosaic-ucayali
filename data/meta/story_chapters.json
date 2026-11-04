@@ -4,7 +4,7 @@
   {
    "id": "intro",
    "title": "A department the size of a country",
-   "text": "Ucayali stretches from the Andean foothills to the heart of the Peruvian Amazon — about 105,000 km², roughly the size of Iceland. The Ucayali River, a ~2,700 km headwater tributary of the Amazon, runs the length of it. Northern Ucayali gets about 1,560 mm of rain a year at a mean 26.3 °C, and lowland rainforest covers most of the department. Around 496,459 people live here; 12.3 % speak an indigenous language as their first language, Shipibo above all.",
+   "text": "Ucayali stretches from the Andean foothills to the heart of the Peruvian Amazon — about 105,000 km², roughly the size of Iceland. The Ucayali River, a ~2,700 km headwater tributary of the Amazon, runs the length of it, and lowland rainforest covers most of the department. On the department's land cells the 1991–2020 normal is ≈ 2,150 mm of rain a year; in Coronel Portillo and Padre Abad it is ≈ 2,240 mm (this app's analysis of CHIRPS v3). Cooley et al. (2024, p.4) give ≈ 1,560 mm for northern Ucayali, citing NOAA (2022). Around 496,459 people live here; 12.3 % speak an indigenous language as their first language, Shipibo above all.",
    "visual": { "layers": [], "camera": { "lng": -73.6, "lat": -9.5, "zoom": 6.1, "pitch": 35 } },
    "numbers": [
     { "value": "~2,700 km", "label": "length of the Ucayali River, between the high Andes and the low hills to the east",
@@ -12,7 +12,9 @@
     { "value": "496,459", "label": "inhabitants of Ucayali",
       "source": { "kind": "study", "citation": "INEI (2022), as cited in Cooley et al. (2024)", "page": "p.4" } },
     { "value": "≈ 105,000 km²", "label": "department area, from the INEI boundary",
-      "source": { "kind": "app", "method": "equal-area measurement of inputs/ucayali.shp" } }
+      "source": { "kind": "app", "method": "equal-area measurement of inputs/ucayali.shp" } },
+    { "value": "≈ 2,150 mm", "label": "mean annual rainfall 1991–2020 on the department's land cells (≈ 2,240 mm in Coronel Portillo + Padre Abad, where the vegetation-class polygons are)",
+      "source": { "kind": "app", "method": "CHIRPS v3.0 annual totals averaged over 0.05° land cells, 1991–2020" } }
    ],
    "sources": [
     "Climate (≈1,560 mm yr⁻¹, 26.3 °C, 114 rainy days): NOAA (2022), as cited in Cooley et al. (2024), Ecology and Evolution 14:e70116, sect. 2.1, p.4.",
@@ -43,6 +45,11 @@
    "text": "Since the 2000 baseline, Ucayali has lost about 6,054 km² of humid Amazon forest — concentrated along the roads and rivers of Padre Abad and Coronel Portillo, while Purús, in the remote east, lost almost nothing. About 91,159 km² of forest still stood in 2024. The regional government's own strategy flags 11.35 % of Ucayali's intact forests as at risk (Gobierno Regional de Ucayali 2022, as cited in Cooley et al. 2024, p.18).",
    "visual": { "layers": ["forest_loss"], "camera": { "lng": -75.1, "lat": -8.85, "zoom": 8.6, "pitch": 0 },
      "chart": "forest_loss_classes",
+     "steps": [
+       { "label": "Drought index, Jun–Aug 2024", "layer": "spi3", "time": "2024-08",
+         "camera": { "lng": -73.6, "lat": -9.5, "zoom": 6.3, "pitch": 0 } },
+       { "label": "Active fires, 2024", "layer": "fire", "time": 2024,
+         "camera": { "lng": -73.6, "lat": -9.5, "zoom": 6.3, "pitch": 0 } } ],
      "pending_note": "The year-by-year loss map and annual series arrive when GEOBOSQUES' annual loss raster (with the year field) is added to the pipeline." },
    "numbers": [
     { "value": "6,054 km²", "label": "forest loss 2001–2024 in the department (includes natural losses, not only deforestation)",
@@ -50,10 +57,17 @@
     { "value": "2,154 vs 30 km²", "label": "loss in Padre Abad vs Purús — the whole gradient of the department in two provinces",
       "source": { "kind": "app", "method": "GEOBOSQUES raster by province (this app's analysis)" } },
     { "value": "11.35 %", "label": "of Ucayali's intact forests (1,059,312 ha) are in at-risk areas, per the regional low-emissions strategy",
-      "source": { "kind": "study", "citation": "Gobierno Regional de Ucayali (2022), as cited in Cooley et al. (2024)", "page": "p.18" } }
+      "source": { "kind": "study", "citation": "Gobierno Regional de Ucayali (2022), as cited in Cooley et al. (2024)", "page": "p.18" } },
+    { "value": "17,468", "label": "VIIRS active-fire detections in the department in 2024 — the highest in the VIIRS record (2012–2025)",
+      "source": { "kind": "app", "method": "NASA FIRMS VIIRS S-NPP, confidence nominal/high, inside the department boundary" } },
+    { "value": "1,686 mm", "label": "department rainfall in 2024 — the lowest annual total of 1981–2025 (normal 1991–2020 ≈ 2,150 mm)",
+      "source": { "kind": "app", "method": "CHIRPS v3.0 annual totals, department land cells; rank among 45 complete years" } },
+    { "value": "−1.89", "label": "department-mean SPI-3 for Jun–Aug 2024 (severely dry, WMO 2012) — the 3rd lowest since 1981, after 2023 (−2.23) and 1988 (−1.91). The data show co-occurrence, not cause.",
+      "source": { "kind": "app", "method": "SPI-3 from CHIRPS v3.0, window ending August, calibration 1991–2020" } }
    ],
    "sources": [
     "GEOBOSQUES (MINAM PNCBMCC + SERFOR/MIDAGRI), 'Mapa del Bosque Húmedo Amazónico Peruano 2000–2024'; loss integrates natural and anthropic losses (product metadata, PRECAUCIONES).",
+    "Fire and drought numbers: this app's analysis of NASA FIRMS VIIRS (2012–2025) and CHIRPS v3.0 (1981–2025); they show co-occurrence in 2024, not cause.",
     "At-risk share: Ucayali Regional Strategy for Low Emissions Rural Development, as cited in Cooley et al. (2024), p.18."
    ]
   },

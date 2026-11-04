@@ -204,6 +204,12 @@ def main():
         flat = np.ascontiguousarray(np.moveaxis(a, 0, -1))
         (APPD / f"{name}_cells.bin").write_bytes(flat.tobytes())
         log.info("%s_cells.bin: %.1f MB", name, flat.nbytes / 1e6)
+    # keys written by later steps (26_spi: months_spi3) survive a re-run of this step
+    old_meta = APPD / "app_meta.json"
+    if old_meta.exists():
+        prev = json.loads(old_meta.read_text(encoding="utf-8"))
+        for k, v in prev.items():
+            meta.setdefault(k, v)
     (APPD / "app_meta.json").write_text(json.dumps(meta), encoding="utf-8")
     common.record("25_climate", APPD / "app_meta.json")
 

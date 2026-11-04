@@ -66,7 +66,7 @@ window.addEventListener("unhandledrejection", (e) => notice("Error: " + (e.reaso
                      "vectors/provinces.geojson", "vectors/districts.geojson",
                      "vectors/admin_labels.geojson", "climate/app/app_meta.json",
                      ...OVERLAYS.filter((o) => o.file).map((o) => o.file)];
-  await Promise.all(probeList.map(async (f) => { have[f] = !isWithheld(f) && await exists(dataUrl(f)); }));
+  await Promise.all([...new Set(probeList)].map(async (f) => { have[f] = !isWithheld(f) && await exists(dataUrl(f)); }));
   state.have = have;
 
   const miss = [];
@@ -88,6 +88,7 @@ window.addEventListener("unhandledrejection", (e) => notice("Error: " + (e.reaso
       return Boolean(item && !item.classList.contains("unavailable"));
     },
     presetClimate: (p) => climate.presetFromHash(p),
+    presetTime: (layer, t) => (layer === "spi3" ? climate.showMonth(String(t)) : thematic.setYear(layer, +t)),
   });
 })();
 
@@ -340,13 +341,15 @@ function initMap() {
     layers.push({ id: "s2", type: "raster", source: "s2", paint: { "raster-resampling": "linear" } });
   }
   if (state.have["tiles/terrain.pmtiles"]) {
+    // separate raster-dem sources for 3D terrain and hillshade (MapLibre warns when they share one)
     sources.dem = { type: "raster-dem", url: pmUrl("tiles/terrain.pmtiles"),
                     tileSize: 256, encoding: "mapbox" };
-    layers.push({ id: "hillshade", type: "hillshade", source: "dem",
+    sources.demHillshade = { type: "raster-dem", url: pmUrl("tiles/terrain.pmtiles"),
+                             tileSize: 256, encoding: "mapbox" };
+    layers.push({ id: "hillshade", type: "hillshade", source: "demHillshade",
                   paint: { "hillshade-exaggeration": 0.35, "hillshade-shadow-color": "#3c4148",
                            "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#5b6672" } });
   }
-  layers.push({ id: "dim", type: "fill", source: "mask", paint: { "fill-color": "#1c232b", "fill-opacity": 0.28 } });
 
   const th = thematic.layersFor(state.registry, pmUrl);   // per-year + static thematic tile layers
   Object.assign(sources, th.sources);
@@ -367,6 +370,12 @@ function initMap() {
     layers.push({ id: "pa-line", type: "line", source: "pa", layout: { visibility: "none" },
                   paint: { "line-color": paColor, "line-width": 1.8 } });
   }
+  /* the outside mask sits ABOVE every data layer (imagery, hillshade, thematic tiles, climate grid,
+     fire points, vectors) and below the outline and labels, and is opaque: nothing outside the
+     department shows through, so no layer can leak tile edges or out-of-department data there.
+     climate.js and the fire points insert themselves before "dim". */
+  layers.push({ id: "dim", type: "fill", source: "mask",
+                paint: { "fill-color": "#dfe5ea", "fill-opacity": 1 } });
   layers.push({ id: "department-line", type: "line", source: "department",
                 paint: { "line-color": "#0a0a0a", "line-width": 1.4 } });
   layers.push(...referenceLayers(sources));

@@ -250,21 +250,22 @@
      "color": "#2e5573"
     },
     "2": {
-     "name_es": "Bosque",
-     "name_en": "Humid Amazon forest (remaining)",
+     "name_es": "Bosque 2024",
+     "name_en": "Humid Amazon forest (remaining in 2024)",
      "color": "#1f6b45"
     },
     "3": {
-     "name_es": "No Bosque 2000",
-     "name_en": "Non-forest at the 2000 baseline",
-     "color": "#d8c26a"
-    },
-    "4": {
      "name_es": "P\u00e9rdida 2001\u20132024",
      "name_en": "Forest loss 2001\u20132024",
      "color": "#d64530"
+    },
+    "4": {
+     "name_es": "No Bosque 2000",
+     "name_en": "Non-forest at the 2000 baseline",
+     "color": "#d8c26a"
     }
    },
+   "not_monitored_km2": 0.06,
    "period": "baseline 2000, loss 2001-2024, forest state 2024"
   },
   {

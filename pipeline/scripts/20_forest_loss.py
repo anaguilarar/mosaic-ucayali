@@ -28,16 +28,18 @@ from rasterio.enums import Resampling
 from rasterio.warp import transform_bounds
 from rasterio.windows import from_bounds as win_from_bounds
 
-from tiler import cut_tiles, encode_png, make_colormap_encoder, max_levels, warp_to_mercator
+from tiler import cut_tiles, encode_png, make_colormap_encoder, warp_to_mercator
 
-# source codes: 1 Hidrografía, 2 Bosque, 3 Pérdida, 4 No Bosque 2000, 5 No Monitoreado, 0 nodata.
-# The zoom-out pyramid keeps each 2x2 block's MAX code, so codes are REMAPPED by display priority
-# (loss on top, then non-forest, forest, water) before tiling: 3<->4 swapped.
-PRIORITY_LUT = [0, 1, 2, 4, 3, 0]           # index = source code -> display code (5 -> transparent)
+# The product's own codes (raster value attribute table, field "Cobertura"); 0 = nodata.
+# Code 5 'No Monitoreado' (outside the humid-Amazon monitoring area) is drawn transparent.
+# Zoomed-out tiles sample one source pixel per output pixel (nearest overviews), so each class
+# keeps its true share at every zoom - no class is favoured (max overviews let loss win, mode
+# overviews erased it).
 COMBINED_CLASSES = {1: ("Hidrografía", "Water", (46, 85, 115, 200)),
-                    2: ("Bosque", "Humid Amazon forest (remaining)", (31, 107, 69, 170)),
-                    3: ("No Bosque 2000", "Non-forest at the 2000 baseline", (216, 194, 106, 140)),
-                    4: ("Pérdida 2001–2024", "Forest loss 2001–2024", (214, 69, 48, 235))}
+                    2: ("Bosque 2024", "Humid Amazon forest (remaining in 2024)", (31, 107, 69, 170)),
+                    3: ("Pérdida 2001–2024", "Forest loss 2001–2024", (214, 69, 48, 235)),
+                    4: ("No Bosque 2000", "Non-forest at the 2000 baseline", (216, 194, 106, 140))}
+NOT_MONITORED = 5
 
 
 def find(keywords, exclude=()):
@@ -126,19 +128,14 @@ def main():
 
     if combined:
         raw = clip_any_crs(combined, "geobosques_bnb", common.bbox())
-        clip = raw.with_name("geobosques_bnb_pri.tif")        # priority-remapped copy (see LUT above)
-        if args.force or not common.fresh(clip, raw):
-            lut = np.array(PRIORITY_LUT + [0] * 250, "u1")
-            with rasterio.open(raw) as src:
-                with rasterio.open(clip, "w", **src.profile) as dst:
-                    for r0 in range(0, src.height, 2048):
-                        h = min(2048, src.height - r0)
-                        w2 = rasterio.windows.Window(0, r0, src.width, h)
-                        dst.write(lut[src.read(1, window=w2)], 1, window=w2)
+        clip = common.mask_to_department(raw, raw.with_name("geobosques_bnb_dept.tif"), nodata=0)
         with rasterio.open(clip) as src:
             crs = src.crs
         zones = {k: gpd.GeoSeries([g], crs="EPSG:4326").to_crs(crs).iloc[0] for k, g in zones4326.items()}
         areas = common.class_areas_km2(clip, zones)
+        px_km2 = 0.03 * 0.03
+        log.info("codes inside the department (30 m pixels / km²): %s",
+                 {c: (round(km / px_km2), km) for c, km in sorted(areas["Ucayali"].items())})
         s = common.DATA / "series"
         s.mkdir(parents=True, exist_ok=True)
         names = {str(k): COMBINED_CLASSES[k][1] for k in COMBINED_CLASSES}
@@ -151,20 +148,23 @@ def main():
         common.record("20_forest_loss", s / "forest_classes.json")
         out = common.DATA / "tiles" / "forest_loss.pmtiles"
         if args.force or not out.exists():
-            merc = warp_to_mercator(clip, f"gbbnb_{common.AREA}", 12, Resampling.nearest,
-                                    dtype="uint8", nodata=0)
-            levels = max_levels(merc, common.CFG["tiles"]["minzoom"], 12)
-            cmap = {k: v[2] for k, v in COMBINED_CLASSES.items()}
+            # nearest warp AND nearest-sampled overviews: each class keeps its true share in expectation
+            # at every zoom (mode overviews erase minority classes such as scattered loss)
+            merc = warp_to_mercator(clip, f"gbdept_{common.AREA}", 12, Resampling.nearest,
+                                    dtype="uint8", nodata=0, ovr=Resampling.nearest)
+            cmap = {k: v[2] for k, v in COMBINED_CLASSES.items()}      # 5 'No Monitoreado' -> transparent
             cut_tiles(merc, out, "GEOBOSQUES forest & loss", "png", common.CFG["tiles"]["minzoom"],
-                      12, make_colormap_encoder(cmap, 0), Resampling.nearest, levels=levels)
+                      12, make_colormap_encoder(cmap, 0), Resampling.nearest)
             common.record("20_forest_loss", out)
         reg["urls"]["tiles"] = "tiles/forest_loss.pmtiles"
         reg["classes"] = {str(k): {"name_es": v[0], "name_en": v[1],
                                    "color": "#%02x%02x%02x" % v[2][:3]} for k, v in COMBINED_CLASSES.items()}
+        reg["not_monitored_km2"] = areas["Ucayali"].get(NOT_MONITORED, 0)
         reg["period"] = "baseline 2000, loss 2001-2024, forest state 2024"
 
     if annual:
-        clip_a = clip_any_crs(annual, "geobosques_loss_annual", common.bbox())
+        raw_a = clip_any_crs(annual, "geobosques_loss_annual", common.bbox())
+        clip_a = common.mask_to_department(raw_a, raw_a.with_name("geobosques_loss_annual_dept.tif"), nodata=0)
         years = year_values(clip_a)
         log.info("annual loss raster: values -> years %s..%s", min(years.values()), max(years.values()))
         with rasterio.open(clip_a) as src:
@@ -184,7 +184,6 @@ def main():
             big = max(years) > 255
             merc = warp_to_mercator(clip_a, f"gbloss_{common.AREA}", 12, Resampling.nearest,
                                     dtype="uint16" if big else "uint8", nodata=0)
-            levels = max_levels(merc, common.CFG["tiles"]["minzoom"], 12)
             cmap = viridis_years(years)
             if big:
                 def enc(data):
@@ -196,7 +195,7 @@ def main():
             else:
                 enc = make_colormap_encoder(cmap, 0)
             cut_tiles(merc, out_a, "GEOBOSQUES loss year", "png", common.CFG["tiles"]["minzoom"],
-                      12, enc, Resampling.nearest, levels=levels)
+                      12, enc, Resampling.nearest)
             common.record("20_forest_loss", out_a)
         reg["urls"]["loss_year"] = "tiles/forest_loss_year.pmtiles"
         reg["years"] = sorted(set(years.values()))

@@ -31,11 +31,29 @@ def fill_padding(path, step=16, sigma=4.0, strip=1024):
     from rasterio.windows import Window
     with rasterio.open(path, "r+") as ds:
         H, W = ds.height, ds.width
-        # the decimated copy is small (1/step^2): fill it globally
-        small = ds.read(1, out_shape=(H // step, W // step)).astype("f4")
+        # the decimated copy is small (1/step^2): built by subsampling full-resolution strips.
+        # NOT ds.read(out_shape=...): that reads the overviews, which were averaged before the fill
+        # and carry no NaN, so the padding looked complete and was never filled (0 m cliffs).
+        sh, sw = -(-H // step), -(-W // step)
+        small = np.empty((sh, sw), "f4")
+        for r0 in range(0, H, strip - strip % step):
+            h = min(strip - strip % step, H - r0)
+            small[r0 // step: r0 // step + -(-h // step)] = ds.read(1, window=Window(0, r0, W, h))[::step, ::step]
         sbad = ~np.isfinite(small)
-        if not sbad.any():
-            return
+        log.info("padding: %.0f %% of the decimated grid is NaN", 100 * sbad.mean())
+        if sbad.any():
+            _fill(ds, small, sbad, step, sigma, strip)
+        # the overviews predate any fill: always rebuild them, or zoomed-out tiles keep NaN holes
+        factors = ds.overviews(1)
+        if factors:
+            log.info("rebuilding overviews %s", factors)
+            ds.build_overviews(factors, Resampling.average)
+
+
+def _fill(ds, small, sbad, step, sigma, strip):
+    from rasterio.windows import Window
+    H, W = ds.height, ds.width
+    if True:
         idx = nd.distance_transform_edt(sbad, return_distances=False, return_indices=True)
         filled = small[tuple(idx)]
         smooth = nd.gaussian_filter(filled, sigma)
