@@ -74,9 +74,10 @@ def main():
         mask.to_file(vec / "department_mask.geojson", driver="GeoJSON")
 
     dist = get_districts().to_crs("EPSG:4326")
+    # IGN DISTRITOS.shp schema: CODDEP/DEPARTAMEN, CODPROV/PROVINCIA, CODDIST/DISTRITO, FUENTE=INEI
     cod = next(c for c in dist.columns if c.upper().startswith("CODDEP") or c.upper() == "CCDD")
-    name_col = next(c for c in dist.columns if "DIST" in c.upper() and dist[c].dtype == object)
-    prov_col = next(c for c in dist.columns if "PROV" in c.upper() and dist[c].dtype == object)
+    name_col = next(c for c in dist.columns if c.upper() in ("DISTRITO", "NOMBDIST", "DISTRICT"))
+    prov_col = next(c for c in dist.columns if c.upper() in ("PROVINCIA", "NOMBPROV", "PROVINCE"))
     du = dist[dist[cod].astype(str).str.zfill(2) == "25"].copy()
     log.info("districts in Ucayali: %d (columns %s)", len(du), [cod, prov_col, name_col])
 

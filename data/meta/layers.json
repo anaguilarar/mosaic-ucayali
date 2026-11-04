@@ -101,6 +101,36 @@
    "units": "true colour (fixed stretch 0-3000, gamma 2.2)",
    "licence": "Copernicus Sentinel data: free use with attribution",
    "citation": "Contains modified Copernicus Sentinel-2 data [2025]"
+  },
+  {
+   "id": "department",
+   "title": "Ucayali department",
+   "group": "Base",
+   "type": "vector",
+   "urls": {
+    "boundary": "vectors/department.geojson",
+    "mask": "vectors/department_mask.geojson"
+   },
+   "source": "INEI department boundary (inputs/ucayali.shp, FUENTE=INEI)",
+   "licence": "Peruvian government boundary data; the same boundaries on datosabiertos.gob.pe (publisher IGN) carry the Open Data Commons Attribution License (ODC-By)",
+   "citation": "INEI / IGN via the Plataforma Nacional de Datos Abiertos (datosabiertos.gob.pe)",
+   "caveats": "Boundaries are referential (1:100,000), not an official delimitation."
+  },
+  {
+   "id": "admin_boundaries",
+   "title": "Provinces & districts",
+   "group": "Base",
+   "type": "vector",
+   "urls": {
+    "provinces": "vectors/provinces.geojson",
+    "districts": "vectors/districts.geojson",
+    "labels": "vectors/admin_labels.geojson"
+   },
+   "source": "IGN 'Limites Departamentales' dataset (DISTRITOS_LIMITES.zip), datosabiertos.gob.pe; provinces dissolved from districts",
+   "period": "portal release 2022-03-10, modified 2023-08-01",
+   "licence": "Open Data Commons Attribution License (ODC-By), as stated on the dataset page",
+   "citation": "Instituto Geogr\u00e1fico Nacional (IGN), Plataforma Nacional de Datos Abiertos",
+   "caveats": "Referential boundaries at 1:100,000; simplified ~90 m for display."
   }
  ]
 }
