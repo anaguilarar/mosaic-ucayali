@@ -261,17 +261,22 @@ windows of the Andean fringe.
 - **Replication window vs the paper (this app's analysis; paper set, 2019-04-18 → 2021-12-31,
   shots inside the polygons; RH95 = GEDI's own rh[95], i.e. untransformed).**
 
-  | Class | n (this app) | n within 65 m rule | mean RH95 (sd) this app | paper n, Table 2a | paper mean RH95: Table 2a (ground returns removed) / Table 2b (untransformed) |
-  |---|---|---|---|---|---|
-  | Bosque_de_colina_baja (mature) | 9,697 | 9,570 | 31.46 m (7.41) | 2,063 | 29.55 / 29.40 m |
-  | Bosque_secundario_o_degradado | 299 | 200 | 20.50 m (9.70) | 282 | 21.25 / 20.82 m |
-  | Purma | 46 | 17 | 5.83 m (3.61) | 46 | 6.33 m / — (2b not transcribed) |
+  This app's RH95 includes the ground returns, i.e. the same method as the paper's **Table 2b**
+  (untransformed), which is therefore the like-for-like column; Table 2a (negative height returns
+  removed) is shown second. Paper values checked against p.16.
 
-  Purma's count matches the paper exactly and secondary forest is within 6 % (and 0.3 m of
-  Table 2b) when shots are counted **inside** the polygons, not within the eroded 65 m area: the
-  paper's table counts appear to be inside-polygon counts, with the 65 m rule as its sensitivity
-  check (Fig. 7) — an inference, the paper does not say so. **Mature forest does not
-  replicate**: 4.7× the paper's footprints, and 2.1 m taller than Table 2b (1.9 m than Table 2a). Not explained by tall
+  | Class | n (this app) | n within 65 m rule | mean RH95 (sd) this app | Table 2b, same method: mean (sd), n | Table 2a, ground returns removed: mean (sd), n |
+  |---|---|---|---|---|---|
+  | Bosque_de_colina_baja (mature) | 9,697 | 9,570 | 31.46 m (7.41) | 29.40 m (6.89), 2,061 | 29.55 m (6.78), 2,063 |
+  | Bosque_secundario_o_degradado | 299 | 200 | 20.50 m (9.70) | 20.82 m (9.15), 281 | 21.25 m (8.85), 282 |
+  | Purma | 46 | 17 | 5.83 m (3.61) | 5.55 m (3.55), 46 | 6.33 m (3.56), 46 |
+
+  Secondary forest and purma agree with Table 2b within about 0.3 m (0.32 and 0.28 m); purma's
+  count matches the paper exactly and secondary forest's is within 6 %, when shots are counted
+  **inside** the polygons, not within the eroded 65 m area: the paper's table counts appear to
+  be inside-polygon counts, with the 65 m rule as its sensitivity check (Fig. 7) — an
+  inference, the paper does not say so. **Mature forest does not replicate**: 4.7× the paper's
+  footprints, and 2.06 m taller than Table 2b (1.91 m than Table 2a). Not explained by tall
   outliers (13 mature shots above 60 m; mean without them 31.40 m); the paper does not state its
   acquisition period, which may have been shorter, or it may have subsampled the 12 large mature
   polygons. Do not quote the mature numbers next to the paper's without this caveat.

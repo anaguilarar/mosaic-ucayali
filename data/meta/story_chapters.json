@@ -98,7 +98,17 @@
    "text": "Height separates the classes cleanly at the extremes: mature lowland forest averages 29.55 m at the 95th energy percentile (RH95), secondary forest 21.25 m, while young purma (6.33 m) and monocrop cacao (6.85 m) are almost indistinguishable by height alone. Mature oil palm sits in between at 11.50 m. The canopy-height map behind this chapter is a different, wall-to-wall model estimate (ETH 2020) — the paper's numbers come from the GEDI footprints themselves.",
    "visual": { "layers": ["canopy"], "camera": { "lng": -74.95, "lat": -8.85, "zoom": 9.5, "pitch": 0 },
      "chart": "rh95_by_class",
-     "pending_note": "This app's own footprint-level comparison against Tables 2a/3a/4a arrives with the GEDI processing." },
+     "comparison": {
+      "title": "This app's GEDI footprints next to Tables 2b and 2a",
+      "intro": "This app's analysis: shots that pass the paper's three filters in the replication window (18 April 2019 – 31 December 2021), inside the published vegetation-class polygons.",
+      "columns": ["Class", "This app: mean RH95 (n)", "Table 2b, same method: mean (n)", "Table 2a, ground returns removed: mean (n)"],
+      "rows": [
+       ["Mature lowland forest", "31.46 m (9,697)", "29.40 m (2,061)", "29.55 m (2,063)"],
+       ["Secondary lowland forest", "20.50 m (299)", "20.82 m (281)", "21.25 m (282)"],
+       ["Young vegetation regrowth (purma)", "5.83 m (46)", "5.55 m (46)", "6.33 m (46)"]
+      ],
+      "note": "Secondary forest and purma agree with Table 2b within about 0.3 m. Mature forest does not replicate: the app's mature-forest polygons collect 4.7 times as many footprints as the paper's sample and average 31.46 m against 29.40 m (Table 2b, p.16), so the two samples are not the same."
+     } },
    "numbers": [
     { "value": "29.55 m", "label": "mean canopy height (RH95) of mature lowland forest, n = 2,063 footprints",
       "source": { "kind": "study", "citation": "Cooley et al. (2024), Table 2a", "page": "p.16" } },

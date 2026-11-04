@@ -163,6 +163,7 @@ function chapterEl(ch) {
   }
   if (ch.visual?.note) c.append(el("p", "stories-note", ch.visual.note));
   if (ch.visual?.pending_note) c.append(el("p", "stories-note", ch.visual.pending_note));
+  if (ch.visual?.comparison) c.append(comparisonEl(ch.visual.comparison));
   for (const n of ch.numbers || []) c.append(numberEl(n));
   if (ch.sources?.length) {
     const d = el("details", "sources");
@@ -176,6 +177,33 @@ function chapterEl(ch) {
     c.append(el("div", "story-actions"), btn);
   }
   return c;
+}
+
+/* a small side-by-side table (this app vs the paper); class names wrap, figures never do */
+function comparisonEl(cmp) {
+  const box = el("div", "story-comparison");
+  if (cmp.title) box.append(el("h4", "chapter-chart-title", cmp.title));
+  if (cmp.intro) box.append(el("p", "stories-note", cmp.intro));
+  const t = el("table");
+  t.style.cssText = "width:100%;border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums;margin:4px 0 6px";
+  const tr = (cells, head) => {
+    const r = el("tr");
+    cells.forEach((v, i) => {
+      // "31.46 m (9,697)": the count goes on its own line so four columns fit a phone
+      const html = !head && i ? v.replace(/ \((.+)\)$/, '<br><span style="color:var(--muted,#5f6368)">($1)</span>') : v;
+      const c = el(head ? "th" : "td", null, html);
+      c.style.cssText = `padding:4px 5px;border-bottom:1px solid var(--line,#dde3e0);vertical-align:top;`
+        + (i ? "text-align:right;white-space:nowrap;" : "text-align:left;overflow-wrap:break-word;")
+        + (head ? "font-weight:600;font-size:11.5px;color:var(--muted,#5f6368);white-space:normal;" : "");
+      r.append(c);
+    });
+    return r;
+  };
+  t.append(tr(cmp.columns, true));
+  for (const row of cmp.rows) t.append(tr(row, false));
+  box.append(t);
+  if (cmp.note) box.append(el("p", "stories-note", cmp.note));
+  return box;
 }
 
 function numberEl(n) {

@@ -13,7 +13,8 @@
    "n": 2063,
    "rh95_mean_2b": 29.4,
    "rh95_sd_2b": 6.89,
-   "group": "forest"
+   "group": "forest",
+   "n_2b": 2061
   },
   {
    "key": "secondary",
@@ -27,7 +28,8 @@
    "n": 282,
    "rh95_mean_2b": 20.82,
    "rh95_sd_2b": 9.15,
-   "group": "forest"
+   "group": "forest",
+   "n_2b": 281
   },
   {
    "key": "oil_palm",
@@ -75,7 +77,10 @@
    "rh50_sd": 1.6,
    "ratio_mean": 0.35,
    "n": 46,
-   "group": "forest"
+   "group": "forest",
+   "rh95_mean_2b": 5.55,
+   "rh95_sd_2b": 3.55,
+   "n_2b": 46
   }
  ]
 }
