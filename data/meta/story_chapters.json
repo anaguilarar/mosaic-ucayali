@@ -145,14 +145,14 @@
   {
    "id": "limits",
    "title": "What the map cannot see",
-   "text": "Every layer here has edges. The paper left out the wetland forests and palm swamps (aguajales) along the Ucayali River: under standing or changing water, the lidar cannot reliably find the ground. They appear in the vegetation-class layer (3 palm-swamp and 2 wetland-forest polygons) but were not analysed. GEDI's coverage is sparse in parts of the western Amazon. And one absence is deliberate: the cacao plots mapped together with women farmers are not in the public dataset, and this app does not look for them — the published polygons cover the forest and regrowth classes only, so the paper's oil-palm and cacao results cannot be reproduced from public data.",
+   "text": "Every layer here has edges. The paper left out the wetland forests that stand in water along the Ucayali River: where the water level keeps changing, the lidar cannot reliably find the ground. The vegetation-class layer includes two such types, palm swamps (aguajales, 3 polygons) and wetland forest (2 polygons), but they were not analysed. GEDI's coverage is sparse in parts of the western Amazon. And one absence is deliberate: the cacao plots mapped together with women farmers are not in the public dataset, and this app does not look for them — the published polygons cover the forest and regrowth classes only, so the paper's oil-palm and cacao results cannot be reproduced from public data.",
    "visual": { "layers": [], "camera": { "lng": -74.3, "lat": -9.1, "zoom": 8.2, "pitch": 30 } },
    "numbers": [
     { "value": "0", "label": "oil-palm or cacao polygons in the published CC0 dataset (by design)",
       "source": { "kind": "app", "method": "inventory of the CaltechDATA v4 polygon file" } }
    ],
    "sources": [
-    "Wetland forests and palm swamps excluded: Cooley et al. (2024), sect. 2.1, p.4.",
+    "Wetland forests along the Ucayali excluded: Cooley et al. (2024), sect. 2.1, p.4.",
     "Polygon counts (3 palm-swamp, 2 wetland-forest): this app's analysis, inventory of the CaltechDATA v4 polygon file.",
     "Sparse GEDI coverage in the western Amazon: Potapov et al. (2021), as cited in Cooley et al. (2024), sect. 4.3, p.19.",
     "Cacao mapped with women farmers of the Alianza Cacao Peru programme: sect. 2.3.3, p.11; the plots are not part of the public dataset."

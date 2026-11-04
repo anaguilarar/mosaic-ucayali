@@ -29,7 +29,7 @@ CLASSES = {
     "Purma":                              ("Young vegetation regrowth (purma)", "#a9c977"),
     "Pastizales_o_herbazales_degradados": ("Degraded shrubland or pasture", "#d8c26a"),
     "Bosque_de_colina_alta":              ("Cloud forest", "#2e5d78"),
-    "Aguajales":                          ("Palm groves (inundated)", "#5e9ea0"),
+    "Aguajales":                          ("Palm swamps (aguajales)", "#5e9ea0"),
     "Bosque_inundado":                    ("Wetland forest", "#3f7f93"),
 }
 

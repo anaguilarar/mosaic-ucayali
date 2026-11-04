@@ -66,7 +66,7 @@ the papers.
   normalises to the correct spelling and keeps the original in `COBERTURA_RAW`. Class mapping to
   the paper (README Table 1 pp. 6–10; paper Table 1 pp. 7–10):
 
-  The app's English labels are **exactly the README Table 1 names** (checked 2026-11-04 against
+  The app's English labels are **exactly the README Table 1 names**, except Aguajales (see its row) (checked 2026-11-04 against
   README pp. 2, 6–10 and the paper's Table 1 pp. 7–10):
 
   | GeoJSON class (normalised) | n | README Table 1 English name (= app label) | Paper's six analysis classes? |
@@ -76,7 +76,7 @@ the papers.
   | Purma | 77 | Young vegetation regrowth (purma) | yes |
   | Pastizales_o_herbazales_degradados | 10 | Degraded shrubland or pasture (README regrowth class 4) | no (not in Table 2) |
   | Bosque_de_colina_alta | 4 | **Cloud forest** — the README's own translation of "bosque de colina alta" (old-growth forest of mountainous regions, ~20–25 m, README p.2 & Table 1B p.7) | no |
-  | Aguajales | 3 | Palm groves (inundated) — "Aguajales / palmerales (inundable)" | no |
+  | Aguajales | 3 | **Palm swamps (aguajales)** — this app's translation (2026-11-04); the README's Table 1 (p.7) lists the class as "Aguajales / palmerales (inundable)", English "Palm groves (inundated)". The Spanish class name is unchanged in the data and the map popup | no |
   | Bosque_inundado | 2 | Wetland forest — the README spells the class "Bosque inundable"; the GeoJSON's "Bosque_inundado" is the same class (spelling variant, recorded here) | no |
   | (absent) | 0 | Mature oil palm; monocrop cacao; agroforestry cacao | in the paper only — **no polygons published**, so those results cannot be reproduced from this dataset; any comparison this app draws covers the forest classes only |
 
