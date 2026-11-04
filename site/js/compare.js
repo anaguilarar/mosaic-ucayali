@@ -19,7 +19,7 @@ export const isOpen = () => cmp != null || mapB != null;
 /* layers the right-hand map keeps: base, mask, outlines and labels, plus the overlay */
 function rightStyle(style, overlayLayerId) {
   const keep = (l) => l.id === overlayLayerId
-    || ["bg", "s2", "hillshade", "dim", "department-line", "labels-start"].includes(l.id)
+    || ["bg", "s2", "hillshade", "dim", "department-halo", "department-line", "labels-start"].includes(l.id)
     || l.id.startsWith("osm-") || l.id.startsWith("story-");
   const layers = style.layers.filter(keep).map((l) =>
     l.id === overlayLayerId ? { ...l, layout: { ...(l.layout || {}), visibility: "visible" } } : l);

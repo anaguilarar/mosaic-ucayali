@@ -371,13 +371,21 @@ function initMap() {
                   paint: { "line-color": paColor, "line-width": 1.8 } });
   }
   /* the outside mask sits ABOVE every data layer (imagery, hillshade, thematic tiles, climate grid,
-     fire points, vectors) and below the outline and labels, and is opaque: nothing outside the
-     department shows through, so no layer can leak tile edges or out-of-department data there.
-     climate.js and the fire points insert themselves before "dim". */
+     fire points, vectors) and below the outline and labels. It stays OPAQUE: at 82 % (tested
+     2026-11-04) the hillshade showed streaks and grooves from the synthetic terrain padding beyond
+     the DEM (department zoom and 60° tilt). climate.js and the fire points insert before "dim". */
   layers.push({ id: "dim", type: "fill", source: "mask",
                 paint: { "fill-color": "#dfe5ea", "fill-opacity": 1 } });
+  /* the outline: a light halo under a dark line, so it reads on imagery, on every thematic palette
+     and on the mask alike */
+  layers.push({ id: "department-halo", type: "line", source: "department",
+                layout: { "line-join": "round" },
+                paint: { "line-color": "#ffffff", "line-opacity": 0.85,
+                         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 3, 8, 4.5, 12, 6] } });
   layers.push({ id: "department-line", type: "line", source: "department",
-                paint: { "line-color": "#0a0a0a", "line-width": 1.4 } });
+                layout: { "line-join": "round" },
+                paint: { "line-color": "#1c2b3a",
+                         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.4, 8, 2, 12, 2.6] } });
   layers.push(...referenceLayers(sources));
 
   map = new maplibregl.Map({
