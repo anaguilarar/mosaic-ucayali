@@ -278,18 +278,23 @@ windows of the Andean fringe.
   Classes the paper did not analyse also receive shots (Aguajales 193, mean 28.39 m;
   Bosque_inundado 4; Bosque_de_colina_alta 1,667, 25.81 m; Pastizales 39) — QA only.
   Strict-set and mission-window equivalents are in `work/gedi/stats.json`.
-- **Tall outliers.** 2,247 strict shots in the department (0.15 %) report RH95 > 60 m (up to
-  137 m; RH50 typically ~20 m; mostly dry-season months) — probably noise or atmospheric returns
-  that pass the paper's filters. They are kept (the paper sets no height cap); the click panel
-  flags any footprint or 1 km cell above 60 m. A cap would be a deviation from the paper's
-  filters and is left as a decision.
+- **Tall outliers (decision 2026-11-04: kept).** **2,247** strict shots in the department
+  (**0.15 %** of 1,506,194) report RH95 > 60 m (up to 137 m; RH50 typically ~20 m; mostly
+  dry-season months) — probably noise or atmospheric returns that pass the paper's filters.
+  They are kept, because the paper sets no height cap; the click panel flags any footprint or
+  1 km cell above 60 m, and the colour scale stays "≥ 40 m". Effect on the mature-forest
+  comparison (paper set, replication window, inside the polygons): **with** them n = 9,697,
+  mean RH95 **31.46 m**; **without** the 13 shots above 60 m, n = 9,684, mean **31.40 m**.
 - **Map products (step 14; this app's analysis, strict set, mission window, inside the
   department).** `gedi_footprints.pmtiles` (17.2 MB): point vector tiles, layer `footprints`
   with rh95 and rh50 in decimetres (negatives set to 0) and the date (yyyymmdd); every shot at
   z11 (overzoomed beyond), a fixed random sample of 1 in 4 at z10 and 1 in 16 at z9.
   `gedi_rh95_1km.tif` (0.2 MB): 0.01° grid, band 1 mean RH95 (dm, int16, encoding-guarded),
   band 2 shot count; 76,755 cells with shots, median 16 shots per cell; cells kept when their
-  centre is inside the department. `gedi_grid.pmtiles` (0.7 MB): display tiles of the grid
+  centre is inside the department. **9,864 of the department's 86,619 cells (11.4 %) have no
+  valid shot**: they are nodata, transparent in the display tiles (the Sentinel-2 imagery shows
+  through — checked: same screen colour with the layer on and off), and the legend explains them
+  ("no valid GEDI shot in this 1 km cell"). `gedi_grid.pmtiles` (0.7 MB): display tiles of the grid
   (z5–9, nearest, the canopy ramp 0–40 m). In the app the grid fades out between zooms 9 and 11
   as the footprints take over.
 

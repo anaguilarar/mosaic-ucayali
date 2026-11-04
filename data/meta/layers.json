@@ -339,6 +339,7 @@
     "shots_in_department": 1506194,
     "rh95_over_60m": 2247,
     "grid_cells": 76755,
+    "grid_cells_empty": 9864,
     "first": "2019-04-20",
     "last": "2025-07-09"
    },

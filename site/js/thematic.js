@@ -171,9 +171,10 @@ function legendBox(title, rows, srcText, ramp) {
     ramp.colors.forEach((c) => { const s = el("span"); s.style.background = c; steps.append(s); });
     box.append(steps, el("div", "axis", `<span>${ramp.left}</span><span>${ramp.right}</span>`));
   }
-  for (const [color, lab] of rows || []) {
+  for (const [color, lab, swatchCss] of rows || []) {
     const r = el("div", "cat-row");
     const sw = el("span", "swatch"); sw.style.background = color;
+    if (swatchCss) sw.style.cssText += swatchCss;
     r.append(sw, document.createTextNode(lab));
     box.append(r);
   }
@@ -196,7 +197,9 @@ function renderLegend() {
         left: "0 m", right: `≥ ${reg.ramp?.max_m ?? 40} m` });
   } else if (state.active === "gedi") {
     const c = reg.counts || {};
-    legendBox("GEDI canopy height (RH95)", [],
+    // empty cells are transparent tiles: the imagery underneath shows through
+    legendBox("GEDI canopy height (RH95)",
+      [["transparent", "no valid GEDI shot in this 1 km cell", "border:1px dashed var(--muted,#6b7a72);box-sizing:border-box"]],
       `${(c.shots_in_department ?? 0).toLocaleString("en-US")} footprints, ${c.first ?? ""} to ${c.last ?? ""} · `
       + "zoomed out: 1 km mean; from zoom 9: one dot per 25 m footprint (a sample at zooms 9–10) · "
       + "strict quality set, this app's analysis · NASA GEDI L2A v002",
@@ -298,7 +301,7 @@ async function showPanel(lngLat, open) {
       <div><div class="label">RH50</div><div class="value num" style="font-size:17px">${m(fp.rh50)} <span class="unit">m</span></div></div>
       <div><div class="label">Date</div><div class="value num" style="font-size:17px">${day(fp.date)}</div></div>` : "") + `
       <div${fp ? "" : ' class="lead"'}><div class="label">Mean RH95 · 1 km cell</div>
-        <div class="value num"${fp ? ' style="font-size:17px"' : ""}>${cell ? m(mean) : "no shots"} <span class="unit">${cell ? "m" : ""}</span></div></div>
+        <div class="value num"${fp ? ' style="font-size:17px"' : ""}>${cell ? m(mean) : "no valid shot"} <span class="unit">${cell ? "m" : ""}</span></div></div>
       <div><div class="label">Shots in the cell</div><div class="value num" style="font-size:17px">${cell ? n : 0}</div></div>`));
     const c = reg.counts || {};
     const share = c.shots_in_department ? (100 * c.rh95_over_60m / c.shots_in_department).toFixed(2) : null;

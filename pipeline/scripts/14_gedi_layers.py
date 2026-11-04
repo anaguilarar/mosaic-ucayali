@@ -6,7 +6,8 @@ department only:
                                       random 1-in-4 sample at z10 and 1-in-16 at z9.
   data/query/gedi_rh95_1km.tif        0.01-degree grid (~1.1 km), int16: band 1 mean RH95 (dm),
                                       band 2 number of shots; cells kept when their centre is inside
-                                      the department. Read by the click panel.
+                                      the department. Read by the click panel. Cells without a valid
+                                      shot are nodata and transparent in the display tiles.
   data/tiles/gedi_grid.pmtiles        display tiles of the grid mean (z5-9, nearest), canopy ramp 0-40 m.
 RH95 here is GEDI's own rh[95] (no ground-return transformation), as in steps 12-13.
 
@@ -175,7 +176,9 @@ def write_grid(df, dept, query_out, display_out):
         ds.set_band_description(1, "mean RH95, decimetres"); ds.set_band_description(2, "shots")
         ds.update_tags(source="GEDI02_A v002 strict set (14_gedi_layers.py)", scale_band1="0.1")
     common.record("14_gedi_layers", query_out)
-    log.info("grid: %d cells with shots; median %d shots per cell", int(has.sum()), int(np.median(cnt[has])))
+    log.info("grid: %d cells with shots; median %d shots per cell; %d of %d department cells empty (%.1f %%)",
+             int(has.sum()), int(np.median(cnt[has])), int((inside & ~has).sum()), int(inside.sum()),
+             100 * (inside & ~has).sum() / inside.sum())
 
     disp = common.WORK / "gedi_grid_display.tif"
     m8 = np.where(has, np.clip(np.round(mean), 0, 254), 255).astype("u1")
@@ -192,7 +195,7 @@ def write_grid(df, dept, query_out, display_out):
     cut_tiles(merc, display_out, "GEDI RH95 1 km grid", "png", common.CFG["tiles"]["minzoom"], 9,
               make_colormap_encoder(lut, 255), Resampling.nearest)
     common.record("14_gedi_layers", display_out)
-    return int(has.sum())
+    return int(has.sum()), int((inside & ~has).sum())
 
 
 def main():
@@ -223,7 +226,7 @@ def main():
 
     write_footprints(df, fp_out)
     common.record("14_gedi_layers", fp_out)
-    cells = write_grid(df, dept, query_out, grid_tiles)
+    cells, empty_cells = write_grid(df, dept, query_out, grid_tiles)
 
     common.update_registry("gedi", {
         "title": "GEDI canopy height (RH95)", "group": "Vegetation", "type": "thematic",
@@ -232,7 +235,7 @@ def main():
         "minzoom": common.CFG["tiles"]["minzoom"], "footprints_from_zoom": min(FP_ZOOMS),
         "ramp": {"max_m": RAMP_MAX},
         "counts": {"shots_in_department": int(len(df)), "rh95_over_60m": int((df.rh95 > 60).sum()),
-                   "grid_cells": cells, "first": first, "last": last},
+                   "grid_cells": cells, "grid_cells_empty": empty_cells, "first": first, "last": last},
         "source": "NASA GEDI L2A (GEDI02_A v002), full-power beams; the paper's filters (Cooley et al. 2024, "
                   "sect. 2.4) plus quality_flag = 1 and degrade_flag = 0 (this app's strict set)",
         "period": f"{first} to {last} (no shots April 2023 - April 2024: GEDI hibernation)",
