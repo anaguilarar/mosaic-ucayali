@@ -166,11 +166,10 @@ function renderLegend() {
       { colors: ["#f0eee1", "#cdd5ab", "#9bbc86", "#579a66", "#1f704a", "#06422b"],
         left: "0 m", right: `≥ ${reg.ramp?.max_m ?? 40} m` });
   } else if (state.active === "forest_loss") {
-    const ys = reg.years || [];
-    legendBox("Forest loss year (GEOBOSQUES)", [],
-      (reg.source || "") + " · any loss within a pixel shows when zoomed out",
-      { colors: ["#4c2c74", "#2e6186", "#1f8d7a", "#58b053", "#b5c943", "#f3e55a"],
-        left: String(ys[0] ?? ""), right: String(ys[ys.length - 1] ?? "") });
+    const rows = Object.values(reg.classes || {}).map((c) => [c.color, `${c.name_en} · ${c.name_es}`]);
+    legendBox("Forest & loss (GEOBOSQUES)", rows,
+      "30 m · MINAM/SERFOR · any loss within a pixel shows when zoomed out · loss includes "
+      + "natural losses, not only deforestation");
   } else if (state.active === "fire") {
     const lg = reg.legend_steps || {};
     legendBox(`Active fires ${y} — density (S-NPP)`,
@@ -238,22 +237,32 @@ async function showPanel(lngLat, open) {
       <div><div class="label">Licence</div><div class="value" style="font-size:15px">CC BY 4.0</div></div>`));
     body.append(el("p", "meta", reg.caveats || ""));
   } else if (state.active === "forest_loss") {
-    const f = await series("forest_loss.json");
-    const data = f.regions["Ucayali"] || {};
-    const years = Object.keys(data);
-    $("#cellTitle").textContent = "Forest loss · Ucayali";
+    $("#cellTitle").textContent = "Forest & loss · Ucayali";
     $("#cellHint").textContent = reg.source;
-    const total = Object.values(data).reduce((a, v) => a + v, 0);
-    body.append(el("div", "kpis", `
-      <div class="lead"><div class="label">Total ${years[0]}–${years[years.length - 1]}</div>
-        <div class="value num">${Math.round(total).toLocaleString()} <span class="unit">km²</span></div></div>`));
-    const block = el("div", "chart-block");
-    block.append(el("h3", null, "Annual forest loss (km², department)"));
-    const mount = el("div"); block.append(mount);
-    Charts.bars(mount, { labels: years.map((x) => (+x % 5 === 0 ? x : "")), values: Object.values(data),
-                         height: 150, format: (v) => Math.round(v).toLocaleString() + " km²" });
-    block.append(el("p", "meta", "this app's analysis of the GEOBOSQUES rasters — see the data report"));
-    body.append(block);
+    const annual = await series("forest_loss.json").catch(() => null);   // the annual product (year field)
+    if (annual?.regions?.Ucayali) {
+      const data = annual.regions.Ucayali;
+      const years = Object.keys(data);
+      const total = Object.values(data).reduce((a, v) => a + v, 0);
+      body.append(el("div", "kpis", `
+        <div class="lead"><div class="label">Total loss ${years[0]}–${years[years.length - 1]}</div>
+          <div class="value num">${Math.round(total).toLocaleString()} <span class="unit">km²</span></div></div>`));
+      const block = el("div", "chart-block");
+      block.append(el("h3", null, "Annual forest loss (km², department)"));
+      const mount = el("div"); block.append(mount);
+      Charts.bars(mount, { labels: years.map((x) => (+x % 5 === 0 ? x : "")), values: Object.values(data),
+                           height: 150, format: (v) => Math.round(v).toLocaleString() + " km²" });
+      block.append(el("p", "meta", "this app's analysis of the GEOBOSQUES rasters — see the data report"));
+      body.append(block);
+    } else {
+      const cls = await series("forest_classes.json").catch(() => null); // the combined product
+      const data = cls?.regions?.Ucayali || {};
+      body.append(el("div", "kpis", Object.entries(data).map(([c, km]) => `
+        <div><div class="label">${cls.classes[c] || c}</div>
+          <div class="value num" style="font-size:17px">${Math.round(km).toLocaleString()} <span class="unit">km²</span></div></div>`).join("")));
+      body.append(el("p", "meta", "Department totals, this app's analysis. The year-by-year loss "
+        + "series arrives with GEOBOSQUES' annual loss raster."));
+    }
   } else {
     const f = await series("fire.json");
     const isBurn = state.active === "burned_area";

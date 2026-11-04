@@ -194,13 +194,19 @@ def class_areas_km2(raster_path, zones, strip=1024, band=1):
     out = {z: {} for z in zones}
     with rasterio.open(raster_path) as src:
         resx, resy = abs(src.transform.a), abs(src.transform.e)
+        projected = src.crs and src.crs.is_projected
+        if projected:                      # zone geometries must already be in the raster's CRS
+            flat_km2 = (resx / 1000) * (resy / 1000)
         for r0 in range(0, src.height, strip):
             h = min(strip, src.height - r0)
             win = rasterio.windows.Window(0, r0, src.width, h)
             a = src.read(band, window=win)
             t = src.window_transform(win)
-            lats = t.f + t.e * (np.arange(h) + 0.5)
-            px_km2 = (resx * 111.3195) * (resy * 111.3195) * np.cos(np.radians(lats))  # per row
+            if projected:
+                px_km2 = np.full(h, flat_km2)
+            else:
+                lats = t.f + t.e * (np.arange(h) + 0.5)
+                px_km2 = (resx * 111.3195) * (resy * 111.3195) * np.cos(np.radians(lats))  # per row
             for zname, geom in zones.items():
                 m = features.rasterize([(geom, 1)], out_shape=(h, src.width), transform=t,
                                        fill=0, dtype="uint8").astype(bool)

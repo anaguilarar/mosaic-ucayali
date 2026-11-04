@@ -1,0 +1,42 @@
+{
+ "unit": "km2",
+ "classes": {
+  "1": "Water",
+  "2": "Humid Amazon forest (remaining)",
+  "3": "Non-forest at the 2000 baseline",
+  "4": "Forest loss 2001\u20132024"
+ },
+ "regions": {
+  "Ucayali": {
+   "1": 2741.74,
+   "2": 91158.57,
+   "3": 5203.74,
+   "4": 6054.47
+  },
+  "ATALAYA": {
+   "1": 875.35,
+   "2": 35988.82,
+   "3": 685.22,
+   "4": 1428.86
+  },
+  "CORONEL PORTILLO": {
+   "1": 1433.47,
+   "2": 31285.65,
+   "3": 3243.84,
+   "4": 2440.71
+  },
+  "PADRE ABAD": {
+   "1": 188.83,
+   "2": 5775.65,
+   "3": 1174.43,
+   "4": 2153.92
+  },
+  "PURUS": {
+   "1": 241.57,
+   "2": 18095.3,
+   "3": 99.17,
+   "4": 30.14
+  }
+ },
+ "method": "GEOBOSQUES combined raster (EPSG:32718) clipped to the department; 30 m pixel counting; this app's analysis"
+}

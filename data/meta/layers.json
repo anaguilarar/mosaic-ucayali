@@ -230,6 +230,42 @@
    "licence": "CC BY 4.0 (ETH Research Collection record)",
    "citation": "Lang, N., Jetz, W., Schindler, K. & Wegner, J.D. (2023). A high-resolution canopy height model of the Earth. Nature Ecology & Evolution 7:1778-1789. doi:10.1038/s41559-023-02206-6. Data: doi:10.3929/ethz-b-000609802",
    "caveats": "Model estimate, not a measurement: tall-canopy heights saturate and the map carries the model's uncertainty (a per-pixel SD layer exists upstream). Display tiles are averaged to ~38 m at z12; clicks read the 10 m raster."
+  },
+  {
+   "id": "forest_loss",
+   "title": "Forest & loss (GEOBOSQUES)",
+   "group": "Land",
+   "type": "thematic",
+   "urls": {
+    "tiles": "tiles/forest_loss.pmtiles"
+   },
+   "source": "GEOBOSQUES (MINAM PNCBMCC + SERFOR/MIDAGRI) Bosque H\u00famedo Amaz\u00f3nico monitoring, 30 m, national rasters clipped to the department; downloaded manually (the site blocks scripted access)",
+   "licence": "the product metadata's LICENCIA field is '-' (no licence stated); citation required as given by GEOBOSQUES",
+   "citation": "MINAM (PNCBMCC) y MIDAGRI (SERFOR). 'Mapa del Bosque H\u00famedo Amaz\u00f3nico Peruano, 2000-2024'. Acceso a trav\u00e9s de GEOBOSQUES, geobosques.minam.gob.pe",
+   "caveats": "Covers the Bosque H\u00famedo Amaz\u00f3nico monitoring area only ('No Monitoreado' elsewhere). Loss includes natural losses, not only deforestation; river-channel migration losses are excluded (metadata PRECAUCIONES). 2001-2016 follow the UMD methodology, 2017+ the PNCBMCC methodology. Areas are this app's analysis.",
+   "classes": {
+    "1": {
+     "name_es": "Hidrograf\u00eda",
+     "name_en": "Water",
+     "color": "#2e5573"
+    },
+    "2": {
+     "name_es": "Bosque",
+     "name_en": "Humid Amazon forest (remaining)",
+     "color": "#1f6b45"
+    },
+    "3": {
+     "name_es": "No Bosque 2000",
+     "name_en": "Non-forest at the 2000 baseline",
+     "color": "#d8c26a"
+    },
+    "4": {
+     "name_es": "P\u00e9rdida 2001\u20132024",
+     "name_en": "Forest loss 2001\u20132024",
+     "color": "#d64530"
+    }
+   },
+   "period": "baseline 2000, loss 2001-2024, forest state 2024"
   }
  ]
 }
