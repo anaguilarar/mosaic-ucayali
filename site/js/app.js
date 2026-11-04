@@ -1,0 +1,458 @@
+/* MOSAIC Ucayali Explorer — map-first app screen, scaffolded from the Lake Victoria Basin Explorer.
+   Static: PMTiles + GeoJSON + JSON read from the data root (site/js/config.js dataUrl). No backend. */
+
+import * as stories from "./stories.js";
+
+import { dataUrl, isWithheld } from "./config.js";
+import { split as splitLazy, setVisibility } from "./layers.js";
+const TILE_V = "1";   // bump to defeat stale HTTP caches after tile rebuilds
+const fmtCoord = (lat, lng) =>
+  `${Math.abs(lat).toFixed(2)}° ${lat >= 0 ? "N" : "S"}, ${Math.abs(lng).toFixed(2)}° ${lng >= 0 ? "E" : "W"}`;
+const closeFloating = (except) => {
+  for (const id of ["popover", "cellPanel", "aboutPanel", "storiesPanel"]) {
+    if (id !== except) { const n = document.getElementById(id); if (n) n.hidden = true; }
+  }
+  if (except !== "storiesPanel") document.getElementById("storiesBtn")?.setAttribute("aria-expanded", "false");
+};
+const pmUrl = (f) => "pmtiles://" + new URL(dataUrl(f) + "?v=" + TILE_V, location.href).href;
+
+/* Thematic overlays: one active at a time (radio). Phase 1 ships the vegetation classes;
+   forest loss, land cover, canopy height and fires join in later phases. */
+const OVERLAYS = [
+  { id: "veg_classes", group: "Vegetation", title: "Vegetation classes", type: "vector",
+    file: "vectors/veg_classes.geojson", regKey: "veg_classes", swatch: "#55a05f" },
+];
+
+const $ = (s) => document.querySelector(s);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+const exists = async (url) => { try { const r = await fetch(url, { method: "HEAD" }); return r.ok; } catch { return false; } };
+const getJSON = async (url) => { const r = await fetch(url); if (!r.ok) throw new Error(url); return r.json(); };
+
+const state = { registry: {}, overlay: null };
+
+/* ---------------- boot ---------------- */
+window.addEventListener("error", (e) => notice("Script error: " + e.message));
+window.addEventListener("unhandledrejection", (e) => notice("Error: " + (e.reason?.message || e.reason)));
+
+(async function boot() {
+  try {
+    const reg = await getJSON(dataUrl("meta/layers.json"));
+    for (const l of reg.layers) state.registry[l.id] = l;
+  } catch { /* registry optional at this stage */ }
+
+  const have = {};
+  const probeList = ["tiles/terrain.pmtiles", "tiles/s2_rgb.pmtiles", "tiles/osm_basemap.pmtiles",
+                     "vectors/department.geojson", "vectors/department_mask.geojson",
+                     "vectors/provinces.geojson", "vectors/districts.geojson",
+                     "vectors/admin_labels.geojson",
+                     ...OVERLAYS.map((o) => o.file)];
+  await Promise.all(probeList.map(async (f) => { have[f] = !isWithheld(f) && await exists(dataUrl(f)); }));
+  state.have = have;
+
+  const miss = [];
+  if (!have["tiles/terrain.pmtiles"]) miss.push("terrain (pipeline 02)");
+  if (!have["tiles/s2_rgb.pmtiles"]) miss.push("imagery (pipeline 03)");
+  if (miss.length) notice(`Base tiles not built yet: ${miss.join(", ")}. The map shows data layers only.`);
+
+  buildRail();
+  buildAbout();
+  initMap();
+  wireUI();
+  await stories.init({
+    setOverlay,
+    get map() { return map; },
+    activeOverlay: () => state.overlay,
+    overlayTitle: (id) => OVERLAYS.find((o) => o.id === id)?.title,
+    overlayAvailable: (id) => {
+      const item = document.querySelector(`.rail .item[data-overlay="${id}"]`);
+      return Boolean(item && !item.classList.contains("unavailable"));
+    },
+  });
+})();
+
+function notice(msg) {
+  const n = $("#notice");
+  n.hidden = false;
+  n.append(el("div", null, msg));
+}
+
+/* ---------------- layer rail ---------------- */
+function buildRail() {
+  const rail = $("#rail");
+  const groups = new Map([["Base", []], ["Vegetation", []]]);
+  const toggle = (title, swatch, ids, on, extra) => {
+    const b = railItem(title, swatch, "");
+    b.setAttribute("aria-pressed", String(on));
+    b.addEventListener("click", () => {
+      const now = b.getAttribute("aria-pressed") !== "true";
+      b.setAttribute("aria-pressed", String(now));
+      for (const id of ids) setVisibility(map, id, now ? "visible" : "none");
+      extra?.(now);
+      updateAttrib();
+    });
+    groups.get("Base").push(b);
+    return b;
+  };
+  if (state.have["tiles/osm_basemap.pmtiles"]) {
+    state.placeNames = true;
+    toggle("Place names", "#ffffff", PLACE_IDS, true, (v) => (state.placeNames = v)).id = "placeNamesItem";
+  }
+  if (state.have["vectors/provinces.geojson"]) {
+    state.admin = false;
+    toggle("Provinces & districts", "#c9ced2", ADMIN_IDS, false, (v) => (state.admin = v)).id = "adminItem";
+  }
+
+  for (const o of OVERLAYS) {
+    const ok = state.have[o.file];
+    const item = railItem(o.title, o.swatch, ok ? "" : "not built");
+    if (!ok) item.classList.add("unavailable");
+    else item.addEventListener("click", () => setOverlay(state.overlay === o.id ? null : o.id));
+    item.dataset.overlay = o.id;
+    groups.get(o.group).push(item);
+  }
+
+  for (const [name, items] of groups) {
+    if (!items.length) continue;
+    const g = el("div", "group");
+    g.append(el("div", "group-label", name));
+    items.forEach((i) => g.append(i));
+    rail.append(g);
+  }
+}
+
+function railItem(title, swatchColor, meta) {
+  const b = el("button", "item");
+  b.setAttribute("aria-pressed", "false");
+  const sw = el("span", "swatch");
+  sw.style.background = swatchColor;
+  b.append(sw, el("span", "label", title));
+  if (meta) {
+    const tag = el("span", "pill", meta);
+    tag.style.marginLeft = "auto";
+    b.append(tag);
+  } else {
+    b.append(el("span", "meta", ""));
+  }
+  return b;
+}
+
+async function setOverlay(id) {
+  state.overlay = id;
+  document.querySelectorAll(".rail .item[data-overlay]").forEach((b) => {
+    b.setAttribute("aria-pressed", String(b.dataset.overlay === id));
+  });
+  for (const o of OVERLAYS) {
+    for (const lid of overlayLayerIds(o.id)) setVisibility(map, lid, o.id === id ? "visible" : "none");
+  }
+  renderLegend(id);
+  updateAttrib();
+  $("#popover").hidden = true;
+}
+
+const overlayLayerIds = (id) => (id === "veg_classes" ? ["veg-fill", "veg-line"] : ["ov-" + id]);
+
+/* ---------------- legend + attribution ---------------- */
+function renderLegend(id) {
+  const box = $("#legend");
+  box.hidden = true;
+  if (id !== "veg_classes") { updateAttrib(); return; }
+  const reg = state.registry.veg_classes;
+  if (!reg?.classes) return;
+  box.innerHTML = "";
+  box.append(el("h3", null, "Vegetation classes (co-produced with local experts)"));
+  const list = el("div", "cat-list");
+  for (const c of reg.classes) {
+    const row = el("div", "cat-row");
+    const sw = el("span", "swatch"); sw.style.background = c.color;
+    row.append(sw, el("span", null,
+      `${c.class_en} · <em>${c.COBERTURA.replaceAll("_", " ")}</em> <span class="num">(${c.count})</span>`));
+    list.append(row);
+  }
+  box.append(list);
+  box.append(el("p", "src", "Polygon counts are this app's analysis of the CC0 dataset. "
+    + "Class definitions: Cooley et al. (2024), Table 1."));
+  box.append(el("p", "src", (reg.source || "") + " · " + (reg.period || "")));
+  box.hidden = false;
+}
+
+function updateAttrib() {
+  const names = { veg_classes: " · Cooley et al. (2024) vegetation typologies (CC0)" };
+  const extra = state.overlay ? (names[state.overlay] || "") : "";
+  const ref = (state.placeNames ? " · © OpenStreetMap contributors" : "")
+            + (state.admin ? " · IGN (ODC-By)" : "");
+  $("#attrib").textContent = "Sentinel-2 · DEM" + extra + ref;
+}
+
+/* ---------------- reference labels: OSM place names + admin boundaries ----------------
+   Label-only layers from the Protomaps basemap extract (schema v4): no roads, buildings or fills. */
+const LABEL_TEXT = { "text-color": "#ffffff", "text-halo-color": "rgba(17,26,34,0.88)", "text-halo-width": 1.5 };
+const PLACE_IDS = ["osm-natural", "osm-water-river", "osm-water", "osm-village", "osm-town", "osm-city", "osm-country"];
+const ADMIN_IDS = ["districts-line", "provinces-line", "districts-hit", "provinces-hit", "districts-label", "provinces-label"];
+
+function referenceLayers(sources) {
+  const L = [{ id: "labels-start", type: "background", paint: { "background-opacity": 0 } }];
+  if (state.have["vectors/provinces.geojson"]) {
+    sources.provinces = { type: "geojson", data: dataUrl("vectors/provinces.geojson") };
+    sources.districts = { type: "geojson", data: dataUrl("vectors/districts.geojson") };
+    sources.admLabels = { type: "geojson", data: dataUrl("vectors/admin_labels.geojson") };
+    const hidden = { visibility: "none" };
+    L.push(
+      { id: "districts-hit", type: "fill", source: "districts", minzoom: 8, layout: hidden, paint: { "fill-opacity": 0 } },
+      { id: "provinces-hit", type: "fill", source: "provinces", layout: hidden, paint: { "fill-opacity": 0 } },
+      { id: "districts-line", type: "line", source: "districts", minzoom: 8, layout: hidden,
+        paint: { "line-color": "#c9ced2", "line-width": 0.6, "line-dasharray": [3, 2], "line-opacity": 0.8 } },
+      { id: "provinces-line", type: "line", source: "provinces", layout: hidden,
+        paint: { "line-color": "#dfe3e6", "line-width": ["interpolate", ["linear"], ["zoom"], 6, 0.7, 11, 1.4],
+                 "line-opacity": 0.9 } },
+      { id: "provinces-label", type: "symbol", source: "admLabels", minzoom: 6.5, maxzoom: 11,
+        filter: ["==", ["get", "level"], "province"],
+        layout: { ...hidden, "text-field": ["get", "name"], "text-font": ["Noto Sans Regular"],
+                  "text-size": 11, "text-letter-spacing": 0.06, "text-transform": "uppercase", "text-padding": 4 },
+        paint: { ...LABEL_TEXT, "text-color": "#e4e8eb", "text-halo-width": 1.3 } },
+      { id: "districts-label", type: "symbol", source: "admLabels", minzoom: 9,
+        filter: ["==", ["get", "level"], "district"],
+        layout: { ...hidden, "text-field": ["get", "name"], "text-font": ["Noto Sans Italic"], "text-size": 11,
+                  "text-padding": 4 },
+        paint: { ...LABEL_TEXT, "text-color": "#e4e8eb", "text-halo-width": 1.3 } });
+  }
+  if (state.have["tiles/osm_basemap.pmtiles"]) {
+    sources.osm = { type: "vector", url: pmUrl("tiles/osm_basemap.pmtiles"),
+                    attribution: "© OpenStreetMap contributors" };
+    const sym = (font, size) => ({ "text-field": ["get", "name"], "text-font": [font], "text-size": size,
+                                   "text-padding": 3, "text-max-width": 8 });
+    const rank = ["-", 0, ["coalesce", ["get", "population_rank"], 0]];
+    L.push(
+      { id: "osm-natural", type: "symbol", source: "osm", "source-layer": "pois", minzoom: 8,
+        filter: ["all", ["has", "name"], ["in", ["get", "kind"], ["literal", ["national_park", "nature_reserve", "protected_area", "forest"]]]],
+        layout: sym("Noto Sans Italic", 11), paint: { ...LABEL_TEXT, "text-color": "#e6f0dc" } },
+      { id: "osm-water-river", type: "symbol", source: "osm", "source-layer": "water", minzoom: 8,
+        filter: ["all", ["has", "name"], ["in", ["get", "kind"], ["literal", ["river", "canal", "stream"]]]],
+        layout: { ...sym("Noto Sans Italic", 11), "symbol-placement": "line", "symbol-spacing": 400 },
+        paint: { ...LABEL_TEXT, "text-color": "#d6eef2" } },
+      { id: "osm-water", type: "symbol", source: "osm", "source-layer": "water",
+        filter: ["all", ["has", "name"], ["==", ["geometry-type"], "Point"],
+                 ["in", ["get", "kind"], ["literal", ["lake", "water", "bay", "reservoir"]]]],
+        layout: sym("Noto Sans Italic", ["interpolate", ["linear"], ["zoom"], 6, 12, 10, 14]),
+        paint: { ...LABEL_TEXT, "text-color": "#d6eef2" } },
+      { id: "osm-village", type: "symbol", source: "osm", "source-layer": "places", minzoom: 11,
+        filter: ["all", ["has", "name"], ["==", ["get", "kind"], "locality"],
+                 ["in", ["get", "kind_detail"], ["literal", ["village", "hamlet"]]]],
+        layout: { ...sym("Noto Sans Regular", 11), "symbol-sort-key": rank }, paint: LABEL_TEXT },
+      { id: "osm-town", type: "symbol", source: "osm", "source-layer": "places", minzoom: 7,
+        filter: ["all", ["has", "name"], ["==", ["get", "kind"], "locality"], ["==", ["get", "kind_detail"], "town"]],
+        layout: { ...sym("Noto Sans Medium", ["interpolate", ["linear"], ["zoom"], 7, 11, 12, 13]), "symbol-sort-key": rank },
+        paint: LABEL_TEXT },
+      { id: "osm-city", type: "symbol", source: "osm", "source-layer": "places",
+        filter: ["all", ["has", "name"], ["==", ["get", "kind"], "locality"], ["==", ["get", "kind_detail"], "city"]],
+        layout: { ...sym("Noto Sans Medium", ["interpolate", ["linear"], ["zoom"], 6, 12, 12, 15]), "symbol-sort-key": rank },
+        paint: LABEL_TEXT },
+      { id: "osm-country", type: "symbol", source: "osm", "source-layer": "places", maxzoom: 7,
+        filter: ["all", ["has", "name"], ["==", ["get", "kind"], "country"]],
+        layout: { ...sym("Noto Sans Medium", 13), "text-transform": "uppercase", "text-letter-spacing": 0.12 },
+        paint: { ...LABEL_TEXT, "text-color": "#f3f5f6" } });
+  }
+  return L;
+}
+
+/* admin unit under a map point, for the popover titles */
+function adminAt(lngLat) {
+  if (!map || !map.getLayer("provinces-hit") || map.getLayoutProperty("provinces-hit", "visibility") !== "visible") return null;
+  const pt = map.project([lngLat.lng, lngLat.lat]);
+  const hits = map.queryRenderedFeatures(pt, { layers: ["districts-hit", "provinces-hit"] });
+  const pr = hits.find((f) => f.layer.id === "provinces-hit"), di = hits.find((f) => f.layer.id === "districts-hit");
+  if (!pr && !di) return null;
+  return { province: pr?.properties.province, district: di?.properties.district };
+}
+
+/* ---------------- map ---------------- */
+let map;
+function initMap() {
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol("pmtiles", protocol.tile);
+
+  const EMPTY = { type: "FeatureCollection", features: [] };
+  const optional = (f) => (state.have[f] ? dataUrl(f) : EMPTY);
+  const sources = {
+    department: { type: "geojson", data: optional("vectors/department.geojson") },
+    mask: { type: "geojson", data: optional("vectors/department_mask.geojson") },
+  };
+  const layers = [
+    { id: "bg", type: "background", paint: { "background-color": "#dfe5ea" } },
+  ];
+
+  if (state.have["tiles/s2_rgb.pmtiles"]) {
+    sources.s2 = { type: "raster", url: pmUrl("tiles/s2_rgb.pmtiles"), tileSize: 256 };
+    layers.push({ id: "s2", type: "raster", source: "s2", paint: { "raster-resampling": "linear" } });
+  }
+  if (state.have["tiles/terrain.pmtiles"]) {
+    sources.dem = { type: "raster-dem", url: pmUrl("tiles/terrain.pmtiles"),
+                    tileSize: 256, encoding: "mapbox" };
+    layers.push({ id: "hillshade", type: "hillshade", source: "dem",
+                  paint: { "hillshade-exaggeration": 0.35, "hillshade-shadow-color": "#3c4148",
+                           "hillshade-highlight-color": "#ffffff", "hillshade-accent-color": "#5b6672" } });
+  }
+  layers.push({ id: "dim", type: "fill", source: "mask", paint: { "fill-color": "#1c232b", "fill-opacity": 0.28 } });
+
+  if (state.have["vectors/veg_classes.geojson"]) {
+    sources.veg = { type: "geojson", data: dataUrl("vectors/veg_classes.geojson") };
+    layers.push({ id: "veg-fill", type: "fill", source: "veg", layout: { visibility: "none" },
+                  paint: { "fill-color": ["get", "color"], "fill-opacity": 0.72 } });
+    layers.push({ id: "veg-line", type: "line", source: "veg", layout: { visibility: "none" },
+                  paint: { "line-color": ["get", "color"], "line-width": 1.2 } });
+  }
+  layers.push({ id: "department-line", type: "line", source: "department",
+                paint: { "line-color": "#0a0a0a", "line-width": 1.4 } });
+  layers.push(...referenceLayers(sources));
+
+  map = new maplibregl.Map({
+    container: "map",
+    style: { version: 8, ...splitLazy(sources, layers),
+             sky: { "sky-color": "#c8d4de", "horizon-color": "#e7ebef", "fog-color": "#e7ebef",
+                    "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.7 },
+             glyphs: new URL(dataUrl("fonts/"), location.href).href + "{fontstack}/{range}.pbf" },
+    center: [-73.6, -9.5], zoom: 6.1, pitch: 32, bearing: 0,
+    maxPitch: 62, minZoom: 5.5, maxZoom: 13, attributionControl: false,
+    maxBounds: [[-79.0, -14.3], [-67.4, -4.4]],   // terrain tiles are padded ~300 km beyond the DEM
+  });
+  window.__map = map;
+  window.fmtCoord = (lat, lng) => {
+    const a = adminAt({ lat, lng });
+    return fmtCoord(lat, lng) + (a ? ` · ${a.district || a.province}` : "");
+  };
+  window.closeFloatingPanels = closeFloating;
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-left");
+
+  map.on("load", async () => {
+    applyHash();
+    if (map.setSky) {
+      map.setSky({ "sky-color": "#c8d4de", "horizon-color": "#e7ebef", "fog-color": "#e7ebef",
+                   "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.7 });
+    }
+    if (state.have["tiles/terrain.pmtiles"]) {
+      map.setTerrain({ source: "dem", exaggeration: 1.6 });
+    } else {
+      $("#exag").disabled = true;
+    }
+  });
+
+  map.on("click", (e) => showPopover(e));
+  map.on("mouseenter", "veg-fill", () => (map.getCanvas().style.cursor = "pointer"));
+  map.on("mouseleave", "veg-fill", () => (map.getCanvas().style.cursor = ""));
+}
+
+/* shareable state: #layer=veg_classes&c=lng,lat,zoom,pitch */
+async function applyHash() {
+  const h = new URLSearchParams(location.hash.slice(1));
+  const c = h.get("c");
+  if (c) {
+    const [lng, lat, zoom, pitch] = c.split(",").map(Number);
+    map.jumpTo({ center: [lng, lat], zoom: zoom || 10, pitch: pitch ?? 0, bearing: 0 });
+  }
+  if (!h.get("layer")) return;
+  const id = h.get("layer");
+  const item = document.querySelector(`.rail .item[data-overlay="${id}"]`);
+  if (item && !item.classList.contains("unavailable")) await setOverlay(id);
+}
+
+async function showPopover(e) {
+  const p = $("#popover");
+  const rows = [
+    `<div class="row"><span>Place</span><span>${fmtCoord(e.lngLat.lat, e.lngLat.lng)}</span></div>`,
+  ];
+  const adm = adminAt(e.lngLat);
+  if (adm) {
+    if (adm.district) rows.push(`<div class="row"><span>District</span><span>${adm.district}</span></div>`);
+    if (adm.province) rows.push(`<div class="row"><span>Province</span><span>${adm.province}</span></div>`);
+  }
+  closeFloating("popover");
+  let title = "Ucayali";
+  if (state.overlay === "veg_classes" && map.getLayer("veg-fill")) {
+    const hits = map.queryRenderedFeatures(e.point, { layers: ["veg-fill"] });
+    if (hits.length) {
+      const f = hits[0].properties;
+      title = f.class_en;
+      rows.push(`<div class="row"><span>Class (local name)</span><span>${String(f.COBERTURA).replaceAll("_", " ")}</span></div>`,
+                `<div class="row"><span>Polygon</span><span>${f.PLOTID} · ${Number(f.area_ha).toLocaleString()} ha</span></div>`,
+                `<div class="row"><span>Digitised on</span><span>${f.MAPA_BASE} imagery, ${f.ANO_IMAGEN}</span></div>`);
+      rows.push(`<p class="meta">Class co-produced with local experts; polygon from the CC0 dataset `
+              + `(doi:10.22002/D1.2318). Area is this app's analysis.</p>`);
+    } else {
+      rows.push(`<p class="meta">No digitised polygon here. The 324 polygons cover sampled patches, `
+              + `not the whole department.</p>`);
+    }
+  }
+  p.innerHTML = `<h3>${title}</h3>${rows.join("")}
+    <p class="meta">${state.overlay === "veg_classes" ? "Cooley et al. (2024) · classes of the forest–agriculture interface" : "Sentinel-2 mosaic · 30 m"}</p>`;
+  const r = $("#map").getBoundingClientRect();
+  p.style.left = Math.min(e.point.x + 12, r.width - 300) + "px";
+  p.style.top = Math.min(e.point.y + 12, r.height - 140) + "px";
+  p.hidden = false;
+}
+
+/* ---------------- about panel ---------------- */
+function buildAbout() {
+  const body = $("#aboutBody");
+  const brand = el("div", "about-brand", `
+    <img src="assets/brand/cgiar-mfl-lockup.png" alt="CGIAR Multifunctional Landscapes" width="180" height="60">
+    <p>Part of <a href="https://mosaic-mfl.github.io/website/">MOSAIC</a> — the CGIAR Multifunctional
+       Landscapes Science Programme. See the <a href="https://mosaic-mfl.github.io/website/catalogue">data
+       catalogue</a> and the <a href="../DATA_REPORT.md">full data report</a> for this app.</p>
+    <p class="meta">Content licensed under CC BY 4.0 unless otherwise stated. Each layer below carries its
+       own source, period and citation.</p>`);
+  body.append(brand);
+  const layers = Object.values(state.registry);
+  if (!layers.length) {
+    body.append(el("div", "empty", "Layer registry not found (data/meta/layers.json)."));
+    return;
+  }
+  for (const l of layers) {
+    const sec = el("div", "chart-block");
+    sec.append(el("h3", null, l.title));
+    sec.append(el("p", "meta",
+      [l.source, l.period, l.units, l.licence].filter(Boolean).join(" · ")));
+    if (l.citation) sec.append(el("p", "meta", l.citation));
+    if (l.caveats) sec.append(el("p", "meta", l.caveats));
+    body.append(sec);
+  }
+}
+
+/* ---------------- ui wiring ---------------- */
+function wireUI() {
+  $("#exag").addEventListener("input", (e) => {
+    const v = +e.target.value;
+    $("#exagVal").textContent = "×" + v.toFixed(1);
+    if (map.getTerrain()) map.setTerrain({ source: "dem", exaggeration: v });
+  });
+  $("#aboutBtn").addEventListener("click", () => {
+    const show = $("#aboutPanel").hidden;
+    if (show) closeFloating("aboutPanel");
+    $("#aboutPanel").hidden = !show;
+  });
+  $("#aboutClose").addEventListener("click", () => ($("#aboutPanel").hidden = true));
+  /* narrow windows: the layer menu is a drawer. ☰ turns into ✕ while it is open; it also closes on Escape,
+     on a tap on the map, and on a phone after a layer is chosen (so the layer can be seen) */
+  const setMenu = (open) => {
+    $("#sidebar").classList.toggle("open", open);
+    $("#menuBtn").setAttribute("aria-expanded", String(open));
+    $("#menuBtn").setAttribute("aria-label", open ? "Close menu" : "Menu");
+    $("#menuBtn path").setAttribute("d", open ? "M3 3l10 10M13 3L3 13" : "M2 4h12M2 8h12M2 12h12");
+  };
+  $("#menuBtn").addEventListener("click", () => setMenu(!$("#sidebar").classList.contains("open")));
+  map.on("click", () => setMenu(false));
+  /* also close on a tap anywhere outside the drawer (legend, panels): the veg-class legend is tall
+     enough at narrow widths that a "tap on the map" often lands on it */
+  document.addEventListener("pointerdown", (e) => {
+    if ($("#sidebar").classList.contains("open")
+        && !e.target.closest("#sidebar") && !e.target.closest("#menuBtn")) setMenu(false);
+  });
+  $("#rail").addEventListener("click", (e) => {
+    if (e.target.closest(".item") && matchMedia("(max-width: 480px)").matches) setMenu(false);
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      setMenu(false);
+      for (const id of ["popover", "aboutPanel", "storiesPanel"]) $("#" + id).hidden = true;
+      $("#storiesBtn").setAttribute("aria-expanded", "false");
+    }
+  });
+}

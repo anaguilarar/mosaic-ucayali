@@ -1,0 +1,25 @@
+# conda env for the mosaic_ucayali pipeline (versions pinned to the ones the pipeline was built with)
+name: mosaic-ucayali
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+      - rasterio==1.5.0
+      - geopandas==1.1.3
+      - shapely==2.1.2
+      - mercantile==1.2.1
+      - pillow==12.3.0
+      - pmtiles==3.8.1
+      - scipy==1.18.0
+      - psutil==7.2.2
+      - numpy>=2,<3
+      - pandas==3.0.3
+      - pyarrow==26.0.1
+      - h5py==3.16.0
+      - duckdb==2.0.0
+      - earthaccess==0.19.0
+      - harmony-py==1.8.0
+      - rio-cogeo==7.0.4
+      - requests>=2.32

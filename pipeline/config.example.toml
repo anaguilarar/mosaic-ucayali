@@ -1,0 +1,60 @@
+# MOSAIC Ucayali Explorer - pipeline configuration.
+# Copy to pipeline/config.toml and edit for this machine. config.toml is gitignored:
+# every path and parameter lives here, so the pipeline never depends on where the repo sits.
+
+[paths]
+# where the shared inputs live (read-only; see ACCESS.md for where each file comes from)
+inputs_dir = 'C:\path\to\inputs\ucayali'
+# the Cooley et al. (2024) CC0 dataset (GeoJSON + README), doi:10.22002/D1.2318
+cooley_dir = 'C:\path\to\cooley_data'
+# intermediates, downloads, logs, manifests - outside synced folders, safe to delete and rebuild
+work_dir = 'C:\path\to\work\ucayali'
+# the app's data root; empty = <repo>/data (with --area pilot, outputs go to <work_dir>/pilot_data)
+data_dir = ''
+# go-pmtiles executable (https://github.com/protomaps/go-pmtiles releases), used only by 04_osm_labels
+pmtiles_cli = ''
+
+[inputs]        # file names inside inputs_dir / cooley_dir
+dem = 'dem_ucayali_basin_extent.tif'
+s2_mosaic = 'Sentinel2_uyacali_Mosaic_2025.tif'
+department = 'ucayali.shp'
+departments_all = 'DEPARTAMENTOS.shp'
+cooley_geojson = '_VegTypol_Ucayali_v4__Feb2022.geojson'
+
+[area]
+# lon/lat W,S,E,N. full = Ucayali department bbox; pilot = a small box around Pucallpa so a new
+# machine can test every step in minutes (--area pilot)
+full_bbox = [-75.95, -11.45, -70.49, -7.26]
+pilot_bbox = [-74.85, -8.75, -74.25, -8.15]
+
+[s2]
+year = '2025'            # written into the registry/attribution
+stretch_max = 3000.0     # fixed reflectance stretch for all bands
+gamma = 2.2
+
+[tiles]
+minzoom = 5
+terrain_maxzoom = 11
+s2_maxzoom = 12          # native 30 m
+osm_maxzoom = 12
+osm_build = '20261103'   # protomaps daily build (https://build.protomaps.com), recorded in the registry
+
+[gedi]
+product = 'GEDI02_A'
+version = '002'
+period_start = '2019-04-18'      # replication window (PLAN.md decision D4)
+period_end = '2021-12-31'
+pilot_month = '2020-07'                 # e.g. '2020-06'; empty = 10_gedi_search --pick-month chooses it
+beams = ['BEAM0101', 'BEAM0110', 'BEAM1000', 'BEAM1011']   # the four full-power beams
+sensitivity_min = 0.9
+elev_range_max_m = 2.0           # among the 5 algorithms left after dropping the largest outlier
+# variables requested from Harmony, per beam (Cooley et al. 2024 filters + positions)
+variables = ['rh', 'sensitivity', 'quality_flag', 'degrade_flag', 'elev_lowestmode',
+             'lat_lowestmode', 'lon_lowestmode', 'shot_number', 'solar_elevation',
+             'geolocation/elev_lowestmode_a1', 'geolocation/elev_lowestmode_a2',
+             'geolocation/elev_lowestmode_a3', 'geolocation/elev_lowestmode_a4',
+             'geolocation/elev_lowestmode_a5', 'geolocation/elev_lowestmode_a6']
+
+[memory]
+gdal_cachemax_mb = 512
+min_free_gb = 4          # memwatch stops a step cleanly below this much free RAM

@@ -1,0 +1,106 @@
+{
+ "layers": [
+  {
+   "id": "veg_classes",
+   "title": "Vegetation classes (co-produced)",
+   "group": "Vegetation",
+   "type": "vector",
+   "urls": {
+    "polygons": "vectors/veg_classes.geojson"
+   },
+   "classes": [
+    {
+     "COBERTURA": "Aguajales",
+     "class_en": "Palm groves, inundated (aguajales)",
+     "color": "#5e9ea0",
+     "count": 3,
+     "area_ha": 456.0
+    },
+    {
+     "COBERTURA": "Bosque_de_colina_alta",
+     "class_en": "Cloud forest (high hills)",
+     "color": "#2e5d78",
+     "count": 4,
+     "area_ha": 26761.0
+    },
+    {
+     "COBERTURA": "Bosque_de_colina_baja",
+     "class_en": "Mature lowland forest",
+     "color": "#1b6b45",
+     "count": 12,
+     "area_ha": 95146.0
+    },
+    {
+     "COBERTURA": "Bosque_inundado",
+     "class_en": "Wetland forest (inundated)",
+     "color": "#3f7f93",
+     "count": 2,
+     "area_ha": 8.0
+    },
+    {
+     "COBERTURA": "Bosque_secundario_o_degradado",
+     "class_en": "Secondary or degraded lowland forest",
+     "color": "#55a05f",
+     "count": 216,
+     "area_ha": 3090.0
+    },
+    {
+     "COBERTURA": "Pastizales_o_herbazales_degradados",
+     "class_en": "Degraded shrubland or pasture",
+     "color": "#d8c26a",
+     "count": 10,
+     "area_ha": 70.0
+    },
+    {
+     "COBERTURA": "Purma",
+     "class_en": "Young vegetation regrowth (purma)",
+     "color": "#a9c977",
+     "count": 77,
+     "area_ha": 100.0
+    }
+   ],
+   "source": "Cooley et al. (2021) vegetation typology dataset v4 (Feb 2022), CaltechDATA; classes co-produced with local experts in Ucayali",
+   "period": "digitised on 2020/2021 imagery",
+   "licence": "CC0 (as stated on the CaltechDATA record)",
+   "citation": "Cooley, S., Pinto, N., Aguilar-Amuchastegui, N., Vela Alvarado, J. & Fahlen, J. (2021). Vegetation typology classification and data set in Ucayali, Peru (v4.0). CaltechDATA. doi:10.22002/D1.2318. Described in Cooley et al. (2024), Ecology and Evolution 14:e70116, doi:10.1002/ece3.70116",
+   "caveats": "Counts and areas are this app's analysis of the CC0 polygon file. The published dataset has no oil-palm or cacao polygons; the paper's results for those classes cannot be reproduced from it. The file's 'Bosque_secudario_o_degradado' spelling is normalised here (original kept in COBERTURA_RAW)."
+  },
+  {
+   "id": "terrain",
+   "title": "Terrain",
+   "group": "Base",
+   "type": "raster-dem",
+   "urls": {
+    "pmtiles": "tiles/terrain.pmtiles"
+   },
+   "encoding": "mapbox",
+   "minzoom": 5,
+   "maxzoom": 11,
+   "exaggeration": {
+    "default": 1.6,
+    "min": 1.0,
+    "max": 4.0
+   },
+   "source": "30 m DEM, department extent (inputs/dem_ucayali_basin_extent.tif; provenance to confirm - see the data report)",
+   "units": "m above sea level",
+   "licence": "per DEM source (to confirm)",
+   "caveats": "Terrain beyond the department extent is synthetic padding for display; elevations are neither shown nor queryable there."
+  },
+  {
+   "id": "s2_rgb",
+   "title": "Satellite imagery (Sentinel-2)",
+   "group": "Base",
+   "type": "raster",
+   "urls": {
+    "pmtiles": "tiles/s2_rgb.pmtiles"
+   },
+   "minzoom": 5,
+   "maxzoom": 12,
+   "source": "Sentinel-2 L2A mosaic 2025, 30 m (Earth Engine export; script in prep/)",
+   "period": "2025",
+   "units": "true colour (fixed stretch 0-3000, gamma 2.2)",
+   "licence": "Copernicus Sentinel data: free use with attribution",
+   "citation": "Contains modified Copernicus Sentinel-2 data [2025]"
+  }
+ ]
+}

@@ -1,9 +1,17 @@
-# intermediates and downloads live in the pipeline's work_dir (see pipeline/config.example.toml)
-work/
-*.log
+# machine-specific pipeline config (copy config.example.toml); intermediates live in its work_dir
+pipeline/config.toml
 __pycache__/
+*.log
 .env
-# large rasters are never committed; the app's published files go to Hugging Face
+
+# data files that go to Hugging Face, not GitHub (the SITE list in site/js/config.js is the
+# source of truth; 91_publish_check.py reports the split). Tiles are ignored except the small
+# OSM basemap served from the repo.
+data/tiles/*.pmtiles
+!data/tiles/osm_basemap.pmtiles
+!data/tiles/terrain.pmtiles
+!data/tiles/s2_rgb.pmtiles
+data/query/
 *.tif
 *.h5
 *.parquet
