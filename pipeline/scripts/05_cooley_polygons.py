@@ -19,16 +19,18 @@ import geopandas as gpd
 
 TYPO = {"Bosque_secudario_o_degradado": "Bosque_secundario_o_degradado"}
 
-# Spanish class -> (English name, legend colour). Names follow the dataset README Table 1 (pp. 6-10)
-# and the paper's Table 1 (pp. 7-10); colours are the app's own.
+# Spanish class -> (English name, legend colour). English names are EXACTLY the dataset README's
+# Table 1 names (pp. 2, 6-10); the first three also match the paper's Table 1 (pp. 7-10).
+# Colours are the app's own. Note: the GeoJSON says 'Bosque_inundado' where the README writes
+# 'Bosque inundable' (same class); 'Bosque_de_colina_alta' is the README's "Cloud forest".
 CLASSES = {
     "Bosque_de_colina_baja":              ("Mature lowland forest", "#1b6b45"),
     "Bosque_secundario_o_degradado":      ("Secondary or degraded lowland forest", "#55a05f"),
     "Purma":                              ("Young vegetation regrowth (purma)", "#a9c977"),
     "Pastizales_o_herbazales_degradados": ("Degraded shrubland or pasture", "#d8c26a"),
-    "Bosque_de_colina_alta":              ("Cloud forest (high hills)", "#2e5d78"),
-    "Aguajales":                          ("Palm groves, inundated (aguajales)", "#5e9ea0"),
-    "Bosque_inundado":                    ("Wetland forest (inundated)", "#3f7f93"),
+    "Bosque_de_colina_alta":              ("Cloud forest", "#2e5d78"),
+    "Aguajales":                          ("Palm groves (inundated)", "#5e9ea0"),
+    "Bosque_inundado":                    ("Wetland forest", "#3f7f93"),
 }
 
 

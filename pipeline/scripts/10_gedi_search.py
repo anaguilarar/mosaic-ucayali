@@ -27,10 +27,13 @@ def search(bbox, start, end):
 
 def main():
     args = common.setup("10_gedi_search", extra_args=[
+        ("--window", dict(choices=["replication", "mission"], default="replication",
+                          help="which configured window to search")),
         ("--month", dict(default="", help="limit to one YYYY-MM")),
         ("--pick-month", dict(action="store_true", help="rank months by granule count"))])
     g = common.CFG["gedi"]
-    start, end = g["period_start"], g["period_end"]
+    start, end = g[args.window + "_window"]
+    end = end or __import__("datetime").date.today().isoformat()
     if args.month:
         y, m = args.month.split("-")
         start = f"{y}-{m}-01"
@@ -61,8 +64,11 @@ def main():
            "granules": [{"name": gr["umm"]["GranuleUR"], "mb": float(val(gr.size)),
                          "begin": gr["umm"]["TemporalExtent"]["RangeDateTime"]["BeginningDateTime"]}
                         for gr in granules]}
-    (out / "search.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
-    log.info("wrote %s", out / "search.json")
+    doc["window"] = args.window
+    (out / f"search_{args.window}.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    if args.window == "replication":                 # 11_gedi_subset reads search.json
+        (out / "search.json").write_text(json.dumps(doc, indent=1), encoding="utf-8")
+    log.info("wrote %s", out / f"search_{args.window}.json")
 
 
 if __name__ == "__main__":

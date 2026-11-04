@@ -42,8 +42,10 @@ osm_build = '20261103'   # protomaps daily build (https://build.protomaps.com), 
 [gedi]
 product = 'GEDI02_A'
 version = '002'
-period_start = '2019-04-18'      # replication window (PLAN.md decision D4)
-period_end = '2021-12-31'
+# two windows: replication = the paper-comparison period (DATA_REPORT, GEDI); mission = the app's
+# own canopy products, start of mission to the latest granule (empty end = search date)
+replication_window = ['2019-04-18', '2021-12-31']
+mission_window = ['2019-04-18', '']
 pilot_month = '2020-07'                 # e.g. '2020-06'; empty = 10_gedi_search --pick-month chooses it
 beams = ['BEAM0101', 'BEAM0110', 'BEAM1000', 'BEAM1011']   # the four full-power beams
 sensitivity_min = 0.9

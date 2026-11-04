@@ -107,9 +107,9 @@ free_gb = shutil.disk_usage(common.WORK_ROOT).free / 2**30
 need(free_gb > (5 if args.area == "pilot" else 15),
      f"{free_gb:.0f} GB free on {common.WORK_ROOT.drive or common.WORK_ROOT}",
      f"only {free_gb:.0f} GB free on the work drive (base layers need ~15 GB of intermediates)")
-if args.area == "full" and free_gb < 60:
-    say(f"  note {free_gb:.0f} GB free: enough for base layers and a GEDI pilot month, but the full "
-        "GEDI period may need ~50-60 GB - check 13_gedi_stats' projection before the full run")
+if args.area == "full" and free_gb < 25:
+    say(f"  note {free_gb:.0f} GB free: enough for base layers and the GEDI subsets (pilot measured "
+        "~3 GB replication / ~6 GB mission window), but keep an eye on 13_gedi_stats' projection")
 
 say("")
 if problems:

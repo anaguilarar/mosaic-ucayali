@@ -93,7 +93,11 @@ def record(step: str, path: Path, note: str = ""):
     with open(path, "rb") as f:
         for chunk in iter(lambda: f.read(1 << 20), b""):
             h.update(chunk)
-    entry = {"file": str(path), "bytes": path.stat().st_size, "sha256": h.hexdigest(),
+    try:                       # work-root-relative path, so a manifest copied from another machine verifies
+        rel = str(Path(path).resolve().relative_to(WORK_ROOT.resolve()))
+    except ValueError:
+        rel = ""               # outputs under data/ (another machine resolves them by absolute path only)
+    entry = {"file": str(path), "rel": rel, "bytes": path.stat().st_size, "sha256": h.hexdigest(),
              "step": step, "area": AREA, "date": time.strftime("%Y-%m-%d %H:%M:%S"), "note": note}
     mf = WORK_ROOT / "manifest.jsonl"
     with open(mf, "a", encoding="utf-8") as f:
@@ -113,6 +117,8 @@ def verify_manifest() -> int:
         seen[e["file"]] = e                    # last write wins
     for file, e in seen.items():
         p = Path(file)
+        if not p.exists() and e.get("rel"):      # manifest written on another machine: try this work root
+            p = WORK_ROOT / e["rel"]
         if not p.exists():
             print("missing:", file)
             continue

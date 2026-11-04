@@ -82,19 +82,24 @@ def run_month(client, concept, month, variables):
 
 def main():
     args = common.setup("11_gedi_subset", extra_args=[
-        ("--month", dict(default="", help="one YYYY-MM (pilot); default runs the whole period"))])
+        ("--window", dict(choices=["replication", "mission"], default="replication",
+                          help="which configured window to run (no --month)")),
+        ("--month", dict(default="", help="one YYYY-MM (pilot); default runs the whole window"))])
     g = common.CFG["gedi"]
-    search = common.WORK / "gedi" / "search.json"
-    if not search.exists():
-        sys.exit("run 10_gedi_search.py first (needs its search.json for the collection id)")
+    search = next((p for p in [common.WORK / "gedi" / f"search_{args.window}.json",
+                               common.WORK / "gedi" / "search.json"] if p.exists()), None)
+    if search is None:
+        sys.exit("run 10_gedi_search.py first (needs its search json for the collection id)")
     concept = json.loads(search.read_text())["concept_id"]
 
     variables = [f"/{b}/{v}" for b in g["beams"] for v in g["variables"]]
     client = Client()                      # auth: env vars or ~/.netrc; nothing logged
 
+    start, end = g[args.window + "_window"]
+    end = end or datetime.now().date().isoformat()
     months = [args.month] if args.month else (
         [g["pilot_month"]] if g.get("pilot_month") and common.AREA == "pilot"
-        else list(month_range(g["period_start"], g["period_end"])))
+        else list(month_range(start, end)))
     if args.force:
         for m in months:
             j = common.WORK / "gedi" / "subsets" / m / "job.json"

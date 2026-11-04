@@ -1,17 +1,19 @@
 """Step 12 - filter GEDI L2A shots to Parquet, granule by granule (memory stays bounded).
 
-Filters, following Cooley et al. (2024) sect. 2.4 pp. 11-12 (their modification of Potapov
-et al. 2021), plus the standard quality flag:
+The Parquet holds the PAPER set - exactly the filters of Cooley et al. (2024) sect. 2.4
+pp. 11-12 (their modification of Potapov et al. 2021), nothing more:
   1. full-power beams only (config [gedi].beams)
-  2. quality_flag == 1 and degrade_flag == 0
-  3. beam sensitivity >= 0.9
-  4. ground-elevation agreement: of the six algorithms' elev_lowestmode_a1..a6, drop the one
+  2. beam sensitivity >= 0.9
+  3. ground-elevation agreement: of the six algorithms' elev_lowestmode_a1..a6, drop the one
      farthest from the median, then require max-min of the remaining five <= 2 m
-  5. inside the area bbox (Harmony subsets carry a margin)
+  4. inside the area bbox (Harmony subsets carry a margin)
+The paper does NOT filter on quality_flag or degrade_flag; both are stored as COLUMNS, so the
+app's own map products can use the STRICT set (quality_flag == 1 and degrade_flag == 0) by
+filtering the same Parquet - 13_gedi_stats reports both sets, DATA_REPORT labels them.
 
 Each input .h5 becomes one Parquet file in <work>/gedi/parquet/<YYYY-MM>/ with positions,
-elevation, sensitivity, solar elevation, the full RH profile (101 values) and named rh50/75/
-95/98 columns. Per-stage shot counts go to <work>/gedi/filter_counts.json (summed over files).
+elevation, sensitivity, solar elevation, the flags, the full RH profile (101 values) and named
+rh50/75/95/98 columns. Per-stage shot counts go to <work>/gedi/filter_counts.json.
 
 Usage:  python scripts/12_gedi_filter.py [--area pilot|full] [--force]
 """
@@ -28,13 +30,13 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-STAGES = ["in_file", "power_beam", "quality", "sensitivity", "elev_agreement", "in_bbox"]
+STAGES = ["in_file", "power_beam", "sensitivity", "elev_agreement", "in_bbox_paper", "strict"]
 
 
 def filter_file(path: Path, beams, sens_min, elev_max, bbox):
     counts = dict.fromkeys(STAGES, 0)
     rows = {k: [] for k in ["shot_number", "beam", "lon", "lat", "elev", "sensitivity",
-                            "solar_elevation", "rh"]}
+                            "solar_elevation", "quality_flag", "degrade_flag", "rh"]}
     with h5py.File(path, "r") as f:
         groups = [k for k in f.keys() if k.startswith("BEAM")]
         for b in groups:
@@ -46,12 +48,10 @@ def filter_file(path: Path, beams, sens_min, elev_max, bbox):
             if b not in beams:
                 continue
             counts["power_beam"] += n
-            q = gr["quality_flag"][:] == 1
-            if "degrade_flag" in gr:
-                q &= gr["degrade_flag"][:] == 0
-            counts["quality"] += int(q.sum())
             sens = gr["sensitivity"][:]
-            q &= sens >= sens_min
+            # beam sensitivity is a fraction in [0, 1]; values above 1 are fill/invalid (seen up to
+            # 98 in cloud-struck shots) and are not a "sensitivity >= 0.9" in the paper's sense
+            q = (sens >= sens_min) & (sens <= 1.0)
             counts["sensitivity"] += int(q.sum())
             try:
                 elevs = np.stack([gr[f"geolocation/elev_lowestmode_a{i}"][:] for i in range(1, 7)])
@@ -71,9 +71,12 @@ def filter_file(path: Path, beams, sens_min, elev_max, bbox):
             w, s, e, nn = bbox
             q &= (lon >= w) & (lon <= e) & (lat >= s) & (lat <= nn)
             k = int(q.sum())
-            counts["in_bbox"] += k
+            counts["in_bbox_paper"] += k
             if not k:
                 continue
+            qf = gr["quality_flag"][:][q].astype("u1")
+            df = (gr["degrade_flag"][:][q] if "degrade_flag" in gr else np.zeros(k)).astype("u1")
+            counts["strict"] += int(((qf == 1) & (df == 0)).sum())
             rows["shot_number"].append(gr["shot_number"][:][q])
             rows["beam"].append(np.full(k, b))
             rows["lon"].append(lon[q]); rows["lat"].append(lat[q])
@@ -81,6 +84,8 @@ def filter_file(path: Path, beams, sens_min, elev_max, bbox):
             rows["sensitivity"].append(sens[q])
             rows["solar_elevation"].append(gr["solar_elevation"][:][q]
                                            if "solar_elevation" in gr else np.full(k, np.nan))
+            rows["quality_flag"].append(qf)
+            rows["degrade_flag"].append(df)
             rows["rh"].append(gr["rh"][:][q].astype("f4"))
     if not rows["shot_number"]:
         return counts, None
@@ -116,13 +121,18 @@ def main():
             total[k] += counts[k]
         if table is not None:
             pq.write_table(table, out, compression="zstd")
-        log.info("%s: %s -> %s shots kept", f.name,
-                 " / ".join(str(counts[k]) for k in STAGES), counts["in_bbox"])
+            common.record("12_gedi_filter", out, "paper-set shots + quality/degrade columns")
+        log.info("%s: %s -> paper %s / strict %s", f.name,
+                 " / ".join(str(counts[k]) for k in STAGES[:4]),
+                 counts["in_bbox_paper"], counts["strict"])
         done += 1
     cj = common.WORK / "gedi" / "filter_counts.json"
-    old = json.loads(cj.read_text()) if cj.exists() else dict.fromkeys(STAGES, 0)
+    old = json.loads(cj.read_text()).get("stages", {}) if cj.exists() else {}
     merged = {k: old.get(k, 0) + total[k] for k in STAGES}
-    cj.write_text(json.dumps({"stages": merged, "note": "cumulative over processed files"},
+    cj.write_text(json.dumps({"stages": merged,
+                              "note": "cumulative over processed files; 'in_bbox_paper' = the paper's "
+                                      "three filters (Cooley et al. 2024 sect. 2.4); 'strict' adds "
+                                      "quality_flag=1 & degrade_flag=0 (app map products only)"},
                              indent=1), encoding="utf-8")
     log.info("processed %d new file(s); cumulative counts: %s", done, merged)
 

@@ -11,14 +11,14 @@
    "classes": [
     {
      "COBERTURA": "Aguajales",
-     "class_en": "Palm groves, inundated (aguajales)",
+     "class_en": "Palm groves (inundated)",
      "color": "#5e9ea0",
      "count": 3,
      "area_ha": 456.0
     },
     {
      "COBERTURA": "Bosque_de_colina_alta",
-     "class_en": "Cloud forest (high hills)",
+     "class_en": "Cloud forest",
      "color": "#2e5d78",
      "count": 4,
      "area_ha": 26761.0
@@ -32,7 +32,7 @@
     },
     {
      "COBERTURA": "Bosque_inundado",
-     "class_en": "Wetland forest (inundated)",
+     "class_en": "Wetland forest",
      "color": "#3f7f93",
      "count": 2,
      "area_ha": 8.0

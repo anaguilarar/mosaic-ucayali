@@ -27,12 +27,26 @@ the papers.
 - **Terrain padding.** As in the Lake Victoria app, the mercator DEM is padded (~300 km) and the
   padding filled with smoothed nearest-edge elevations so a bounded camera never sees missing
   tiles; elevations there are synthetic, for display only (registry caveat says so).
-- **DEM provenance — OPEN ITEM.** The export script has not been filed; the registry entry and the
-  About panel carry "provenance to confirm" until it is. Do not cite a DEM product name yet.
+- **DEM provenance — OPEN ITEM (reconstruction filed).** The original export scripts were not
+  found; `prep/gee_dem_export.js` and `prep/gee_s2_mosaic_2025.js` are **RECONSTRUCTIONS**
+  (headers say so) built from the files' own properties — grid EPSG:4326 at 0.000269494585236°
+  (= GEE scale:30), bounds −75.9482, −11.4484 → −70.4944, −7.2618, S2 bands B4/B3/B2 uint16
+  harmonized, DEM float32 with band name **'DEM'** (the GEE band name of Copernicus GLO-30).
+  The DEM is assumed **Copernicus GLO-30** per Andres (2026-11-04), supported by the band name;
+  the registry/About keep "to confirm" until the real script or an explicit confirmation lands.
+  The reconstructions have not been run.
 - **S2 reflectance scale.** Checked on 3 × 1024² sample windows at tiling time (03_s2 logs the
   1/5/50/95/99 percentiles); the fixed stretch is 0–3000 with gamma 2.2. If the darkest sampled
   reflectance is ≥ 900 the post-2022 +1000 L2A offset is suspected and the log warns — fix the
   Earth Engine export, not the stretch.
+- **S2 tile-size check (2026-11-04).** `s2_rgb.pmtiles` is 5.0 MB (1,828 WebP tiles ≈ 2.7 KB
+  each) vs 38 MB for the Lake Victoria app. Verified, not a defect: max zoom 12 (native 30 m),
+  WebP quality 82 (same as LVB); the input is **masked to the department** — 62.1 % of the
+  raster is empty (all outside the boundary), **0.000 % empty inside the department** (no cloud
+  gaps; full-year median). So only ~38 % of candidate tiles carry data, and what they carry is
+  near-uniform dense forest, which WebP compresses far harder than the LVB's heterogeneous
+  water/agriculture/urban scene. Visual check at z8 (department) and z12 (Pucallpa street grid)
+  is clean and continuous.
 - **Boundaries.** The IGN portal page states the boundaries are *referential* at 1:100,000 — not
   an official delimitation (registry caveats carry this). Geometry simplified ~90 m for display.
   The portal's download endpoint answers HTTP 418 to non-browser clients; the zip is fetched once
@@ -42,15 +56,18 @@ the papers.
   normalises to the correct spelling and keeps the original in `COBERTURA_RAW`. Class mapping to
   the paper (README Table 1 pp. 6–10; paper Table 1 pp. 7–10):
 
-  | GeoJSON class (normalised) | n | Paper / README class | In the paper's GEDI analysis? |
+  The app's English labels are **exactly the README Table 1 names** (checked 2026-11-04 against
+  README pp. 2, 6–10 and the paper's Table 1 pp. 7–10):
+
+  | GeoJSON class (normalised) | n | README Table 1 English name (= app label) | Paper's six analysis classes? |
   |---|---|---|---|
-  | Bosque_de_colina_baja | 12 | Mature ("old-growth") lowland forest | yes — but see the sampling note below |
-  | Bosque_secundario_o_degradado | 216 | Secondary or degraded lowland forest | yes |
-  | Purma | 77 | Young vegetation regrowth (< ~8 yr) | yes |
-  | Pastizales_o_herbazales_degradados | 10 | Degraded shrubland or pasture (README class 4) | no (not in Table 2) |
-  | Bosque_de_colina_alta | 4 | Cloud forest (README Table 1A) | no |
-  | Aguajales | 3 | Inundated palm groves (README Table 1A) | no |
-  | Bosque_inundado | 2 | Wetland forest (README Table 1A) | no |
+  | Bosque_de_colina_baja | 12 | Mature lowland forest ("Lowland forest: old-growth"; paper: "Bosque maduro de colina baja / Mature lowland forest") | yes — see the sampling note below |
+  | Bosque_secundario_o_degradado | 216 | Secondary or degraded lowland forest (paper: "Secondary lowland forest") | yes |
+  | Purma | 77 | Young vegetation regrowth (purma) | yes |
+  | Pastizales_o_herbazales_degradados | 10 | Degraded shrubland or pasture (README regrowth class 4) | no (not in Table 2) |
+  | Bosque_de_colina_alta | 4 | **Cloud forest** — the README's own translation of "bosque de colina alta" (old-growth forest of mountainous regions, ~20–25 m, README p.2 & Table 1B p.7) | no |
+  | Aguajales | 3 | Palm groves (inundated) — "Aguajales / palmerales (inundable)" | no |
+  | Bosque_inundado | 2 | Wetland forest — the README spells the class "Bosque inundable"; the GeoJSON's "Bosque_inundado" is the same class (spelling variant, recorded here) | no |
   | (absent) | 0 | Mature oil palm; monocrop cacao; agroforestry cacao | in the paper only — **no polygons published**, so those results cannot be reproduced from this dataset; any comparison this app draws covers the forest classes only |
 
   **Mature-forest sampling note:** the paper's Table 2a reports 2,063 mature-forest footprints
@@ -77,46 +94,57 @@ the papers.
 - **Access.** CMR search via earthaccess; spatial (department bbox −75.95, −11.45 → −70.49, −7.26)
   + variable subsets via NASA **Harmony**, one job per calendar month. Credentials from
   `EARTHDATA_USERNAME`/`EARTHDATA_PASSWORD` or `~/.netrc`; never stored in the repo.
-  Inventory 2026-11-04: **650 granules** intersect the bbox in 2019-04-18 → 2021-12-31
-  (826 GB if downloaded whole — hence subsetting); whole mission 2019-04 → 2025-07: 1,195
-  granules, ~1.5 TB. Suggested pilot month 2020-07 (28 granules).
+- **Two windows** (config `[gedi]`): **replication** 2019-04-18 → 2021-12-31, compared with the
+  paper's tables; **mission** 2019-04-18 → latest granule, for the app's own canopy products.
+  Inventory 2026-11-04: replication **650 granules / 33 months with data** (826 GB whole →
+  ~3.1 GB subset, ~3.3 h of Harmony wall time at the pilot rate); mission **1,195 granules /
+  63 months with data, last 2025-07** (1.49 TB whole → ~5.6 GB subset, ~6.5 h). Pilot month
+  2020-07 (28 granules).
 - **Variables requested** (per full-power beam): rh, sensitivity, quality_flag, degrade_flag,
   elev_lowestmode, lat/lon_lowestmode, shot_number, solar_elevation,
   geolocation/elev_lowestmode_a1..a6.
-- **Filters** (Cooley et al. 2024 sect. 2.4 pp. 11–12, after Potapov et al. 2021, plus the
-  standard quality flag):
-  1. full-power beams only: BEAM0101, BEAM0110, BEAM1000, BEAM1011 (the paper says "power beam
-     mode only" without listing IDs);
-  2. quality_flag = 1 and degrade_flag = 0 (pipeline addition, standard L2A practice);
-  3. beam sensitivity ≥ 0.9;
-  4. ground-elevation agreement ≤ 2 m across the five algorithms left after dropping the one
-     farthest from the six-algorithm median (the paper's stated modification: "after removing
-     the algorithm that yielded the largest outlier elevation", p.12);
-  5. inside the department bbox.
+- **Two shot sets from one Parquet** (quality_flag and degrade_flag are stored as columns,
+  never used to build the Parquet):
+  - **paper set** (replication; compared with Tables 2a/3a/4a): exactly the filters of
+    sect. 2.4 pp. 11–12 — (1) full-power beams only: BEAM0101, BEAM0110, BEAM1000, BEAM1011
+    (the paper says "power beam mode only" without listing IDs); (2) beam sensitivity ≥ 0.9 —
+    implemented as 0.9 ≤ sensitivity ≤ 1.0, because sensitivity is defined as a fraction and
+    the v002 files carry fill values up to ~98 on cloud-struck shots, which a bare "≥ 0.9"
+    would wrongly pass (observed: 70 such shots inside the mature-forest polygons with
+    RH95 = 0 m and "ground" at cloud height); (3) ground-elevation agreement ≤ 2 m across
+    the five algorithms left after dropping the one farthest from the six-algorithm median
+    ("after removing the algorithm that yielded the largest outlier elevation", p.12);
+    plus the department bbox. The paper does not filter on quality_flag or degrade_flag.
+  - **strict set** (the app's own map products only, labelled as such): paper set plus
+    quality_flag = 1 and degrade_flag = 0.
 - **Homogeneous-area criterion.** Shots compared with the vegetation polygons are counted twice:
   within the polygon, and within the polygon eroded by 32.5 m, so the ~65 m diameter
   (25 m footprint ± 2σ ≈ 20 m geolocation error, Fig. 6 p.15) lies in one class.
 - **Storage.** Filtered shots to Parquet (zstd), one file per granule, partitioned by month, in
   the work dir; full RH profile (101 values) kept per shot plus named rh50/75/95/98 columns.
   Per-stage counts recorded in `filter_counts.json` → this section when the pilot lands.
-- **Pilot run (2020-07, executed 2026-11-04).** Harmony job 1e9cb8ec-94ab-43bd-9e69-a6fc8a2dfa49:
-  26 granules subset with the variable list above, **132 MB** downloaded in ~6 min wall (vs ~33 GB
-  for the same granules whole). Filter stages (shots, cumulative): in subsets **514,148** (the four
-  power beams only — Harmony returns only the requested beams); quality_flag = 1 & degrade_flag = 0
-  **202,275**; sensitivity ≥ 0.9 cut nothing further (the v002 quality_flag already encodes the
-  sensitivity criterion); ground-elevation agreement ≤ 2 m (5 of 6 algorithms) **81,128** kept
-  (16 % of raw); bbox cut nothing further (Harmony already clipped). Parquet: 21 files, 14 MB.
-- **Pilot shots in the Cooley polygons** (one month only — small numbers, QA not science):
-  93 inside; 87 with the 65 m homogeneity criterion (polygon eroded 32.5 m). By class:
-  Bosque_de_colina_alta 77/74, Bosque_secundario_o_degradado 7/5,
-  Pastizales_o_herbazales_degradados 5/4, Purma 4/4, **Bosque_de_colina_baja 0/0** — 142 raw
-  July-2020 shots fall inside the mature-forest polygons but every one fails quality_flag = 1
-  this month (the dominant polygon sits in hillier terrain near the Cordillera Azul buffer);
-  expected to fill in over the full 33-month window. Mean RH95 (this app's analysis, one month,
-  tiny n): colina_alta 30.3 m, secundario 30.5 m (n = 7), pastizales 7.9 m, purma 4.0 m.
-- **Full-run projection** from the pilot: ~33 months × 132 MB ≈ **4.3 GB** of Harmony subsets and
-  roughly 3–4 h of Harmony wall time if months run sequentially (~6 min each; the queue varies);
-  filtered Parquet ≈ 0.5 GB. Comfortably within the work-disk budget.
+- **Pilot run (2020-07, executed 2026-11-04; filters re-run after the review).** Harmony job
+  1e9cb8ec-94ab-43bd-9e69-a6fc8a2dfa49: 26 granules subset with the variable list above,
+  **132 MB** downloaded in ~6 min wall (vs ~33 GB for the same granules whole). Filter stages
+  (shots, cumulative): in subsets **514,148** (the four power beams only — Harmony returns only
+  the requested beams); 0.9 ≤ sensitivity ≤ 1.0 **394,409**; ground-elevation agreement ≤ 2 m
+  (5 of 6 algorithms) **110,832** = the **paper set** (bbox cut nothing — Harmony already
+  clipped); quality_flag = 1 & degrade_flag = 0 on top → **81,128** = the **strict set**.
+  Parquet: 21 files, ~15 MB.
+- **Pilot shots in the Cooley polygons** (one month only — small numbers, QA not science).
+  paper set: **95** inside, **89** with the 65 m homogeneity criterion (polygon eroded 32.5 m);
+  strict set: 93 / 87. By class (paper, inside/65 m): Bosque_de_colina_alta 79/76,
+  Bosque_secundario_o_degradado 7/5, Pastizales_o_herbazales_degradados 5/4, Purma 4/4,
+  **Bosque_de_colina_baja 0/0 in both sets** — 142 raw July-2020 shots fall inside the
+  mature-forest polygons but all carry fill sensitivity (> 1) and cloud-height "ground"
+  elevations, i.e. genuinely invalid returns, not a filter choice; expected to fill in over
+  the full window. Mean RH95 (this app's analysis, one month, tiny n), paper set:
+  colina_alta 29.8 m, secundario 30.5 m (n = 7), pastizales 7.9 m, purma 4.0 m — strict set
+  nearly identical (30.3 / 30.5 / 7.9 / 4.0).
+- **Full-run projection** from the pilot (4.7 MB per subset granule, ~6 min of Harmony wall per
+  month): replication window 650 granules / 33 months ≈ **3.1 GB subsets, ~3.3 h**, Parquet
+  ≈ 0.4 GB; mission window 1,195 granules / 63 months ≈ **5.6 GB subsets, ~6.5 h**, Parquet
+  ≈ 0.8 GB. Comfortably within the work-disk budget.
 
 ## 4. References
 
