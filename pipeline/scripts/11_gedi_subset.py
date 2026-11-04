@@ -38,44 +38,65 @@ def month_bounds(month):
     return datetime(y, m, 1), nxt
 
 
+def download_with_retry(client, job, outdir, month, attempts=4):
+    """Harmony result URLs are signed and occasionally answer 400/5xx mid-batch; download_all with
+    overwrite=False skips completed files, so a retry only fetches what is missing."""
+    for attempt in range(1, attempts + 1):
+        try:
+            futures = client.download_all(str(job), directory=str(outdir), overwrite=False)
+            return [f.result() if hasattr(f, "result") else str(f) for f in futures]
+        except Exception as err:
+            if attempt == attempts:
+                raise
+            log.warning("%s: download attempt %d failed (%s); retrying in 60 s", month, attempt, err)
+            time.sleep(60)
+
+
 def run_month(client, concept, month, variables):
     outdir = common.WORK / "gedi" / "subsets" / month
     done = outdir / "job.json"
+    pending = outdir / "pending.json"
     if done.exists():
         log.info("%s: already subset (%s); --force removes it", month, done)
         return json.loads(done.read_text())
-    have = sorted(outdir.glob("*.h5"))
-    if have:                 # an earlier run downloaded but crashed before writing job.json
-        size_mb = sum(f.stat().st_size for f in have) / 1e6
-        info = {"month": month, "job": "recovered", "files": [str(f) for f in have],
-                "mb": round(size_mb, 1), "seconds": 0, "variables": True}
-        done.write_text(json.dumps(info, indent=1), encoding="utf-8")
-        log.info("%s: recovered %d existing files (%.0f MB)", month, len(have), size_mb)
-        return info
     outdir.mkdir(parents=True, exist_ok=True)
-    w, s, e, n = common.bbox()
-    start, stop = month_bounds(month)
     t0 = time.time()
-    req = Request(collection=Collection(id=concept), spatial=BBox(w, s, e, n),
-                  temporal={"start": start, "stop": stop}, variables=variables)
-    if not req.is_valid():
-        sys.exit(f"invalid Harmony request: {req.error_messages()}")
-    try:
-        job = client.submit(req)
-    except Exception as err:
-        if variables:
-            log.warning("%s: variable subset rejected (%s); retrying spatial-only", month, err)
-            return run_month(client, concept, month, None)
-        raise
-    log.info("%s: Harmony job %s submitted, waiting...", month, job)
-    client.wait_for_processing(job, show_progress=False)
-    futures = client.download_all(job, directory=str(outdir), overwrite=False)
-    files = [f.result() if hasattr(f, "result") else str(f) for f in futures]
+    if pending.exists():     # an earlier run submitted this job but was interrupted: re-attach,
+        job = json.loads(pending.read_text())["job"]        # missing files are fetched, rest skipped
+        log.info("%s: resuming Harmony job %s", month, job)
+    else:
+        have = sorted(outdir.glob("*.h5"))
+        if have:             # pre-pending.json era crash: files exist but completeness is unknown
+            log.warning("%s: %d files exist but no job record - treating as complete; delete the "
+                        "folder and re-run if in doubt", month, len(have))
+            size_mb = sum(f.stat().st_size for f in have) / 1e6
+            info = {"month": month, "job": "recovered", "files": [str(f) for f in have],
+                    "mb": round(size_mb, 1), "seconds": 0, "variables": True}
+            done.write_text(json.dumps(info, indent=1), encoding="utf-8")
+            return info
+        w, s, e, n = common.bbox()
+        start, stop = month_bounds(month)
+        req = Request(collection=Collection(id=concept), spatial=BBox(w, s, e, n),
+                      temporal={"start": start, "stop": stop}, variables=variables)
+        if not req.is_valid():
+            sys.exit(f"invalid Harmony request: {req.error_messages()}")
+        try:
+            job = client.submit(req)
+        except Exception as err:
+            if variables:
+                log.warning("%s: variable subset rejected (%s); retrying spatial-only", month, err)
+                return run_month(client, concept, month, None)
+            raise
+        pending.write_text(json.dumps({"job": str(job), "variables": bool(variables)}), encoding="utf-8")
+        log.info("%s: Harmony job %s submitted, waiting...", month, job)
+    client.wait_for_processing(str(job), show_progress=False)
+    files = download_with_retry(client, job, outdir, month)
     dt = time.time() - t0
     size_mb = sum(Path(f).stat().st_size for f in files) / 1e6
     info = {"month": month, "job": str(job), "files": [str(f) for f in files],
             "mb": round(size_mb, 1), "seconds": round(dt), "variables": bool(variables)}
     done.write_text(json.dumps(info, indent=1), encoding="utf-8")
+    pending.unlink(missing_ok=True)
     log.info("%s: %d files, %.0f MB in %.1f min", month, len(files), size_mb, dt / 60)
     return info
 

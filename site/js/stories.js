@@ -256,10 +256,39 @@ async function buildChart(kind, mount) {
     if (title) parent.append(el("h4", "chapter-chart-title", title));
     const d = el("div"); parent.append(d); return d;
   };
-  if (kind === "demo_series") {          // generic fallback: {"title": ..., "labels": [...], "values": [...]}
-    const s = await series(kind + ".json");
-    Charts.line(host(s.title || kind), { labels: s.labels, series: [{ name: s.name || "value", values: s.values }],
-      format: (v) => String(v), height: 150 });
+  if (kind === "rh95_by_class") {
+    const t = await series("cooley_tables.json");
+    Charts.bars(host("Canopy height by class — RH95, m (Table 2a)"), {
+      labels: t.classes.map((c) => c.label.replace(" forest", "").replace("Young regrowth (purma)", "Purma").replace(" agroforestry", " AF").replace(" monocrop", " mono")),
+      values: t.classes.map((c) => c.rh95_mean), height: 160,
+      format: (v) => v.toFixed(2) + " m", highlight: 0 });
+    mount.append(el("p", "stories-note", "The paper's published means (ground returns removed); "
+      + "standard deviations and counts are in Table 2a, p.16."));
+  } else if (kind === "rh_ratio_by_class") {
+    const t = await series("cooley_tables.json");
+    Charts.bars(host("Canopy shape — mean RH50/RH95 (Table 4a)"), {
+      labels: t.classes.map((c) => c.label.replace(" forest", "").replace("Young regrowth (purma)", "Purma").replace(" agroforestry", " AF").replace(" monocrop", " mono")),
+      values: t.classes.map((c) => c.ratio_mean), height: 150, max: 0.7,
+      format: (v) => v.toFixed(2), highlight: 1 });
+    mount.append(el("p", "stories-note", "Closer to 1 = energy returned high in the canopy. "
+      + "The paper's values, Table 4a p.17 (abstract p.1: 0.58 / 0.54 / 0.53)."));
+  } else if (kind === "forest_loss_classes") {
+    const f = await series("forest_classes.json");
+    const d = f.regions["Ucayali"] || {};
+    Charts.bars(host("Department land, km² (GEOBOSQUES classes)"), {
+      labels: Object.keys(d).map((c) => (f.classes[c] || c).split(" (")[0]),
+      values: Object.values(d), height: 150,
+      format: (v) => Math.round(v).toLocaleString() + " km²",
+      highlight: Object.keys(d).findIndex((c) => (f.classes[c] || "").startsWith("Forest loss")) });
+    mount.append(el("p", "stories-note", "This app's analysis of the GEOBOSQUES combined raster."));
+  } else if (kind === "fire_detections") {
+    const f = await series("fire.json");
+    const d = f.snpp_detections_dept;
+    const years = Object.keys(d);
+    Charts.bars(host("VIIRS active-fire detections per year (department)"), {
+      labels: years.map((x) => (+x % 4 === 0 ? x : "")), values: Object.values(d), height: 150,
+      format: (v) => Math.round(v).toLocaleString(), highlight: years.indexOf("2024") });
+    mount.append(el("p", "stories-note", "S-NPP only, confidence nominal/high; this app's analysis."));
   } else {
     throw new Error("unknown chart kind: " + kind);
   }

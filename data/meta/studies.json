@@ -1,0 +1,59 @@
+{
+ "stories": [
+  {
+   "id": "cooley_2024_structure",
+   "kind": "published",
+   "question": "How do canopy height and shape differ among Ucayali's forest and agricultural classes?",
+   "finding": "Mature lowland forest averages 29.55 m canopy height (RH95) against 21.25 m for secondary forest, 11.50 m for mature oil palm, 6.85–8.90 m for cacao and 6.33 m for young purma (Table 2a, p.16, ground returns removed; n = 46–2,063 footprints per class). The surprise is the canopy's shape: secondary forest's RH50/RH95 ratio (0.54) is nearly that of mature forest (0.58), and oil palm mimics a closed canopy at 0.53, while cacao and purma stay low at 0.35–0.36 (Table 4a, p.17; abstract p.1). Even after accounting for canopy height, mature forest keeps a ~0.03 higher ratio than secondary (p < .0001, sect. 3.2 p.13).",
+   "caveat": "The discussion text (sect. 4.1, p.13) states the mature/secondary ratios the other way round; this app quotes Table 4a and the abstract. Table 4b appears to have its mature and oil-palm rows swapped and is not quoted. The paper's data link points to GEDI L2A v001 while this app processes v002. The paper's oil-palm and cacao results cannot be reproduced from public data: the CC0 polygon dataset contains no oil-palm or cacao polygons (the cacao plots were mapped with individual women farmers and are deliberately not published).",
+   "citation": "Cooley, S.S., Pinto, N., Becerra, M., Vela Alvarado, J.W., Fahlen, J.C., Rivera, O., Fricker, G.A., De Los Ríos Dantas, A.R., Aguilar-Amuchastegui, N., Reygadas, Y., Gan, J., DeFries, R. & Menge, D.N.L. (2024). Ecology and Evolution 14:e70116 (CC BY)",
+   "doi": "10.1002/ece3.70116",
+   "layers": ["veg_classes", "canopy"],
+   "camera": { "lng": -75.2, "lat": -8.9, "zoom": 10, "pitch": 0 }
+  },
+  {
+   "id": "cooley_2024_coproduction",
+   "kind": "published",
+   "question": "Can local knowledge and spaceborne lidar be combined to monitor a fragmented tropical landscape?",
+   "finding": "Yes — the vegetation typology was co-produced through a two-day workshop and ~bi-monthly dialogues over two years with Alianza Cacao, CIAT, Conservación Amazónica, the Universidad Nacional de Ucayali, the Universidad Nacional Mayor de San Marcos, the Ucayali economic development office, SERNANP and women cacao farmers of the Alianza Cacao Peru programme (sect. 2.2 p.5, sect. 2.3.3 p.11). The combination matters where each side is blind: GEDI sees structure through cloud but misses plots smaller than its ~65 m homogeneous-area requirement — after that filter, no cacao observations remained (Fig. 6 p.15; sect. 3.1 p.13) — while local knowledge defined classes optical imagery confuses.",
+   "caveat": "The published lessons (shared vision; co-produced land-cover keys; two-way knowledge exchange, sect. 4.2 p.18) are the authors' qualitative synthesis, not measured outcomes. Individual collaborating farmers are deliberately not identified here.",
+   "citation": "Cooley, S.S., et al. (2024). Ecology and Evolution 14:e70116 (CC BY); dataset: CaltechDATA doi:10.22002/D1.2318 (CC0)",
+   "doi": "10.1002/ece3.70116",
+   "layers": ["veg_classes"],
+   "camera": { "lng": -75.25, "lat": -8.95, "zoom": 10.3, "pitch": 0 }
+  },
+  {
+   "id": "santini_2026_sediment",
+   "kind": "published",
+   "question": "How much water and sediment does the Ucayali River move, and what do its floodplains do to the flux?",
+   "finding": "The Andean Ucayali exports 455 [410, 500] ×10⁶ t yr⁻¹ of suspended sediment (40 % sand), of which 36 % is trapped in the floodplain — predominantly as sand (65 % of deposition) — and delivers 290 [235, 345] ×10⁶ t yr⁻¹ to the Amazon River, making it the dominant sediment source among the Andean foreland tributaries. At high water the floodplain stores up to 19.1 [15.3, 22.9] km³ (~38 % of discharge), capturing up to 14 % of the sand flux at peak, while recession recycling contributes 22 % of the suspended load at the outlet (abstract, p.3367).",
+   "caveat": "Model-based budgets (SWAT-Amazon constrained by long-term observations and remote sensing) with the bracketed uncertainty ranges shown; the paper argues budget accuracy rests on multi-source observations rather than calibration alone (abstract, p.3367). River reaches, not the forest interface, are the study object.",
+   "citation": "Santini, W., Delort-Ylla, A., Lavado-Casimiro, W., Camenen, B., Roussillon, J., Pérez Arévalo, J.J., Molina-Carpio, J. & Martinez, J.M. (2026). Hydrology and Earth System Sciences 30:3367–3397 (CC BY)",
+   "doi": "10.5194/hess-30-3367-2026",
+   "layers": [],
+   "camera": { "lng": -74.4, "lat": -8.9, "zoom": 8, "pitch": 0 }
+  },
+  {
+   "id": "balling_2026_planform",
+   "kind": "published",
+   "question": "How fast does the Ucayali River move across its floodplain, seen by radar?",
+   "finding": "Using Sentinel-1 SAR quarterly composites (2017–2025) across the whole Amazon basin, the upper Ucayali stands out with the basin's highest measured channel migration rate — 293.94 m per quarter, far above the second-ranked Xingu (96.81 m/q) — and a sinuosity of 1.99 (p.17; basin table p.43). The underlying basin-wide water masks reached 98.5 % overall accuracy (abstract, p.1).",
+   "caveat": "The authors themselves flag the Ucayali value as likely inflated: centerline-distance migration picks up classification noise, cutoffs and avulsions (p.22), and ≈1,176 m yr⁻¹ exceeds earlier Landsat-based estimates of 36–750 m yr⁻¹ (p.23). The planform metrics are not validated in situ (abstract, p.1). Read it as 'the Ucayali is the basin's most dynamic large river', not as a precise rate.",
+   "citation": "van Rijt, I., Balling, J. & Reiche, J. (2026). Assessment of River Planform Dynamics in the Amazon Basin Using Sentinel-1 SAR Data (2017–2025). Remote Sensing 18:2075 (CC BY)",
+   "doi": "10.3390/rs18132075",
+   "layers": [],
+   "camera": { "lng": -74.2, "lat": -9.6, "zoom": 9, "pitch": 0 }
+  },
+  {
+   "id": "swat_amazon_model",
+   "kind": "explore",
+   "question": "Could land-use change in Ucayali be linked to river flows and sediment with a model?",
+   "finding": "SWAT-Amazon v1.0 is the regionally adapted SWAT2012 used by Santini et al. (2026): a Fortran executable plus an R workflow, adding Muskingum-with-variable-K, kinematic- and diffusive-wave routing and new sand/fine-sediment routing modules built for Amazonian floodplains (repository README). It is the natural tool for a future question this app does not yet answer: what the forest-loss patterns shown here mean for water and sediment downstream.",
+   "caveat": "A model framework, not a finding — nothing from it is shown on this map yet. Version in bibliography: SWAT-Amazon v1.0 (william-santini/SWAT-Amazon, commit 231c5e5).",
+   "citation": "Santini, W. SWAT-Amazon v1.0 (github.com/william-santini/SWAT-Amazon); described in Santini et al. (2026), HESS 30:3367–3397",
+   "doi": "10.5194/hess-30-3367-2026",
+   "layers": ["forest_loss"],
+   "camera": { "lng": -74.6, "lat": -8.8, "zoom": 8, "pitch": 0 }
+  }
+ ]
+}

@@ -218,5 +218,18 @@ the papers.
   (public-domain information; derived maps with citation).
 - NASA FIRMS. VIIRS 375 m active fire product (VNP14IMGT), country archives.
   firms.modaps.eosdis.nasa.gov.
+- Santini, W., Delort-Ylla, A., Lavado-Casimiro, W., Camenen, B., Roussillon, J., Pérez Arévalo,
+  J.J., Molina-Carpio, J. & Martinez, J.M. (2026). Long-term hydro-sedimentary dynamics of the
+  Ucayali River (Amazon Basin). *HESS* 30:3367–3397. doi:10.5194/hess-30-3367-2026 (CC BY;
+  studies card — numbers from the abstract, p.3367).
+- van Rijt, I., Balling, J. & Reiche, J. (2026). Assessment of River Planform Dynamics in the
+  Amazon Basin Using Sentinel-1 SAR Data (2017–2025). *Remote Sensing* 18:2075.
+  doi:10.3390/rs18132075 (CC BY; studies card — Ucayali migration p.17, authors' caveats pp.22–23).
+- Santini, W. SWAT-Amazon v1.0 (github.com/william-santini/SWAT-Amazon, commit 231c5e5 in
+  bibliography) — model framework card only; nothing from it is displayed.
+- Story transcriptions: `data/series/cooley_tables.json` carries Tables 2a/3a/4a values verbatim
+  (its `source` field names the tables and pages); the story quotes those plus sect. 2.1 p.4,
+  sect. 2.2 p.5, Table 1 pp.7–10, sect. 2.4 pp.11–12, sect. 3.1–3.2 p.13, Fig. 6 p.15,
+  sect. 4.2 p.18 (the regional strategy's 11.35 % as a secondary citation), sect. 4.3 p.19.
 - OpenStreetMap contributors (ODbL 1.0), via Protomaps basemap builds (protomaps.com).
 - Contains modified Copernicus Sentinel-2 data [2025].

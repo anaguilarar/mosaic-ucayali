@@ -1,0 +1,170 @@
+{
+ "title": "Where the forest meets the farm",
+ "chapters": [
+  {
+   "id": "intro",
+   "title": "A department the size of a country",
+   "text": "Ucayali stretches from the Andean foothills to the heart of the Peruvian Amazon — about 105,000 km², roughly the size of Iceland. The Ucayali River, a ~2,700 km headwater tributary of the Amazon, runs the length of it. Northern Ucayali gets about 1,560 mm of rain a year at a mean 26.3 °C, and lowland rainforest covers most of the department. Around 496,459 people live here; 12.3 % speak an indigenous language as their first language, Shipibo above all.",
+   "visual": { "layers": [], "camera": { "lng": -73.6, "lat": -9.5, "zoom": 6.1, "pitch": 35 } },
+   "numbers": [
+    { "value": "~2,700 km", "label": "length of the Ucayali River, between the high Andes and the low hills to the east",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 2.1", "page": "p.4" } },
+    { "value": "496,459", "label": "inhabitants of Ucayali (INEI 2022, as cited by the paper)",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 2.1", "page": "p.4" } },
+    { "value": "≈ 105,000 km²", "label": "department area, from the INEI boundary",
+      "source": { "kind": "app", "method": "equal-area measurement of inputs/ucayali.shp" } }
+   ],
+   "sources": [
+    "Climate (≈1,560 mm yr⁻¹, 26.3 °C, 114 rainy days) and population: Cooley et al. (2024), Ecology and Evolution 14:e70116, sect. 2.1, p.4."
+   ]
+  },
+  {
+   "id": "classes",
+   "title": "The forest is not one thing",
+   "text": "What a land-cover map calls 'forest' is many things here: old-growth lowland forest, secondary forest regrowing after cultivation, young purma on recently rested fields, palm swamps, cloud forest. Cooley et al. built their vegetation classes WITH the people who know this landscape — a two-day workshop and about two years of roughly bi-monthly dialogues with local experts, then 324 polygons digitised on satellite imagery and verified through time. The classes carry local names: purma is under ~8 years old, secondary forest ~8–20, mature forest more than 20.",
+   "visual": { "layers": ["veg_classes"], "camera": { "lng": -75.25, "lat": -8.95, "zoom": 10.3, "pitch": 0 },
+     "note": "Click any polygon for its class, local name and the imagery it was digitised on. The polygons are sampled patches, not a wall-to-wall map." },
+   "numbers": [
+    { "value": "324", "label": "vegetation-class polygons published by the project (CC0), shown on this map",
+      "source": { "kind": "app", "method": "count of the CaltechDATA v4 polygon file (doi:10.22002/D1.2318)" } },
+    { "value": "< 8 · 8–20 · > 20 years", "label": "purma · secondary forest · mature forest, as the local typology defines them",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), Table 1", "page": "pp.8–10" } }
+   ],
+   "sources": [
+    "Co-production process (workshop + ~bi-monthly dialogues over 2 years): Cooley et al. (2024), sect. 2.2, p.5.",
+    "Class definitions and names: Table 1, pp.7–10; dataset README (CaltechDATA doi:10.22002/D1.2318, CC0).",
+    "Digitisation on Google Earth/Bing (~2015–2019) and MAXAR (2020), verified with monthly Planet imagery: sect. 2.3.1, p.6."
+   ]
+  },
+  {
+   "id": "forest_loss",
+   "title": "Twenty-four years of loss",
+   "text": "Since the 2000 baseline, Ucayali has lost about 6,054 km² of humid Amazon forest — concentrated along the roads and rivers of Padre Abad and Coronel Portillo, while Purús, in the remote east, lost almost nothing. About 91,159 km² of forest still stood in 2024. The regional government's own strategy flags 11.35 % of Ucayali's intact forests as at risk.",
+   "visual": { "layers": ["forest_loss"], "camera": { "lng": -75.1, "lat": -8.85, "zoom": 8.6, "pitch": 0 },
+     "chart": "forest_loss_classes",
+     "pending_note": "The year-by-year loss map and annual series arrive when GEOBOSQUES' annual loss raster (with the year field) is added to the pipeline." },
+   "numbers": [
+    { "value": "6,054 km²", "label": "forest loss 2001–2024 in the department (includes natural losses, not only deforestation)",
+      "source": { "kind": "app", "method": "GEOBOSQUES combined raster clipped to the department, 30 m pixel counting" } },
+    { "value": "2,154 vs 30 km²", "label": "loss in Padre Abad vs Purús — the whole gradient of the department in two provinces",
+      "source": { "kind": "app", "method": "GEOBOSQUES raster by province (this app's analysis)" } },
+    { "value": "11.35 %", "label": "of Ucayali's intact forests (1,059,312 ha) are in at-risk areas, per the regional low-emissions strategy",
+      "source": { "kind": "study", "citation": "Gobierno Regional de Ucayali (2022), as cited in Cooley et al. (2024), sect. 4.2", "page": "p.18" } }
+   ],
+   "sources": [
+    "GEOBOSQUES (MINAM PNCBMCC + SERFOR/MIDAGRI), 'Mapa del Bosque Húmedo Amazónico Peruano 2000–2024'; loss integrates natural and anthropic losses (product metadata, PRECAUCIONES).",
+    "At-risk share: Ucayali Regional Strategy for Low Emissions Rural Development, as cited in Cooley et al. (2024), p.18."
+   ]
+  },
+  {
+   "id": "gedi",
+   "title": "A laser from the Space Station",
+   "status": "pending",
+   "placeholder": "Waiting for the GEDI processing: the footprint map and this app's own filter counts arrive when the full-mission GEDI run lands (steps 10–13 of the pipeline).",
+   "text": "NASA's GEDI lidar, mounted on the International Space Station, fires laser pulses that return the vertical structure of the forest in 25 m footprints — through the haze and between the clouds that defeat optical satellites. Cooley et al. kept only the most reliable shots: full-power beams, beam sensitivity of at least 0.9, and ground elevations that five of six algorithms agreed on to within 2 m.",
+   "visual": { "layers": ["canopy"], "camera": { "lng": -74.7, "lat": -8.8, "zoom": 8.5, "pitch": 0 } },
+   "numbers": [
+    { "value": "25 m", "label": "diameter of one GEDI footprint on the ground",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), Fig. 6", "page": "p.15" } },
+    { "value": "≥ 0.9 · ≤ 2 m", "label": "beam sensitivity threshold · allowed ground-elevation spread among the five best algorithms",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 2.4", "page": "pp.11–12" } }
+   ],
+   "sources": [
+    "GEDI L2A product and filters: Cooley et al. (2024), sect. 2.4, pp.11–12; Dubayah et al. (2020).",
+    "This app uses GEDI02_A v002 (the paper's data link is v001) — see the data report."
+   ]
+  },
+  {
+   "id": "heights",
+   "title": "How tall is each forest?",
+   "text": "Height separates the classes cleanly at the extremes: mature lowland forest averages 29.55 m at the 95th energy percentile (RH95), secondary forest 21.25 m, while young purma (6.33 m) and monocrop cacao (6.85 m) are almost indistinguishable by height alone. Mature oil palm sits in between at 11.50 m. The canopy-height map behind this chapter is a different, wall-to-wall model estimate (ETH 2020) — the paper's numbers come from the GEDI footprints themselves.",
+   "visual": { "layers": ["canopy"], "camera": { "lng": -74.95, "lat": -8.85, "zoom": 9.5, "pitch": 0 },
+     "chart": "rh95_by_class",
+     "pending_note": "This app's own footprint-level comparison against Tables 2a/3a/4a arrives with the GEDI processing." },
+   "numbers": [
+    { "value": "29.55 m", "label": "mean canopy height (RH95) of mature lowland forest, n = 2,063 footprints",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), Table 2a", "page": "p.16" } },
+    { "value": "21.25 m", "label": "mean RH95 of secondary or degraded lowland forest (sd 8.85 m — the most variable class)",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), Table 2a", "page": "p.16" } }
+   ],
+   "sources": [
+    "RH95 by class: Table 2a, p.16 (ground returns removed). The abstract quotes the untransformed Table 2b values (29.40 / 20.82 m), p.1–2 and p.16.",
+    "RH50 by class: Table 3a, p.16.",
+    "Background map: Lang et al. (2023) ETH canopy height 2020, 10 m (CC BY 4.0) — a model estimate, independent of the paper."
+   ]
+  },
+  {
+   "id": "shape",
+   "title": "The shape of the canopy",
+   "text": "Height is only half the story; the other half is where the canopy holds its substance. The ratio RH50/RH95 says how high the median of the returned laser energy sits. The surprise of the paper: secondary forest (0.54) looks almost like mature forest (0.58) in vertical profile — the authors expected regrowing forest to look clearly different. Oil palm (0.53) mimics a closed forest canopy too, while cacao and purma (0.35–0.36) keep their energy low.",
+   "visual": { "layers": ["canopy"], "camera": { "lng": -75.2, "lat": -8.9, "zoom": 10, "pitch": 0 },
+     "chart": "rh_ratio_by_class",
+     "note": "Caveat: the paper's discussion text (sect. 4.1, p.13) states these two ratios the other way round; this app quotes Table 4a and the abstract, and records the discrepancy in the data report." },
+   "numbers": [
+    { "value": "0.58 vs 0.54", "label": "mean RH50/RH95 of mature vs secondary lowland forest — unexpectedly similar vertical profiles",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), Table 4a (abstract p.1)", "page": "p.17" } },
+    { "value": "p < .0001", "label": "after accounting for canopy height, mature forest keeps a ~0.03 higher ratio than secondary",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 3.2", "page": "p.13" } }
+   ],
+   "sources": [
+    "RH50/RH95 by class: Table 4a, p.17; abstract values 0.58 / 0.54 / 0.53, pp.1–2.",
+    "Hypotheses and the surprise: Fig. 1 p.4; sect. 4.1 pp.13, 16–17. Table 4b is not quoted (rows appear swapped — data report §2)."
+   ]
+  },
+  {
+   "id": "footprint",
+   "title": "The footprint problem",
+   "text": "A GEDI shot lands within about ±10 m of where it says it lands. To be sure a footprint sampled one single class, Cooley et al. required a homogeneous area of ~65 m across (the 25 m footprint plus twice the geolocation error) — and at that standard, not a single cacao observation survived: smallholder plots are simply too small for the laser's aim. That is why the smallest farms stay invisible to spaceborne lidar, and why local knowledge had to carry the map where the instrument could not.",
+   "visual": { "layers": ["veg_classes"], "camera": { "lng": -75.468, "lat": -8.897, "zoom": 12.5, "pitch": 0 },
+     "note": "The view shows small purma and secondary-forest polygons near San Alejandro — patches at the scale where the 65 m rule bites." },
+   "numbers": [
+    { "value": "~65 m", "label": "diameter of the homogeneous area needed per footprint (25 m beam ± 2σ geolocation error)",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), Fig. 6", "page": "p.15" } },
+    { "value": "0", "label": "cacao observations remaining after the 65 m homogeneity filter",
+      "source": { "kind": "study", "citation": "Cooley et al. (2024), sect. 3.1", "page": "p.13" } }
+   ],
+   "sources": [
+    "Geolocation error and the 45 m / 65 m rule: sect. 2.4 p.12 and Fig. 6 p.15; consequences for cacao and small high-conservation-value patches: pp.13, 18–19."
+   ]
+  },
+  {
+   "id": "limits",
+   "title": "What the map cannot see",
+   "text": "Every layer here has edges. The paper excluded the seasonally flooded forests along the river — spaceborne lidar cannot fix 'the ground' where the water level keeps changing. GEDI's coverage is sparse in parts of the western Amazon. And one absence is deliberate: the cacao plots mapped together with women farmers are not in the public dataset, and this app does not look for them — the published polygons cover the forest and regrowth classes only, so the paper's oil-palm and cacao results cannot be reproduced from public data.",
+   "visual": { "layers": [], "camera": { "lng": -74.3, "lat": -9.1, "zoom": 8.2, "pitch": 30 } },
+   "numbers": [
+    { "value": "0", "label": "oil-palm or cacao polygons in the published CC0 dataset (by design)",
+      "source": { "kind": "app", "method": "inventory of the CaltechDATA v4 polygon file" } }
+   ],
+   "sources": [
+    "Inundated forests excluded: Cooley et al. (2024), sect. 2.1, p.4.",
+    "Sparse GEDI coverage in the western Amazon: sect. 4.3, p.19.",
+    "Cacao mapped with women farmers of the Alianza Cacao Peru programme: sect. 2.3.3, p.11; the plots are not part of the public dataset."
+   ]
+  },
+  {
+   "id": "stewards",
+   "title": "Who stewards the landscape",
+   "text": "Seven national protected areas and three regional conservation areas reach into Ucayali, from Cordillera Azul in the west to Alto Purús in the east. The vegetation typology itself was co-produced by people who manage and live from this landscape: Alianza Cacao, CIAT, Conservación Amazónica, the Universidad Nacional de Ucayali and the Universidad Nacional Mayor de San Marcos, the regional economic development office, SERNANP — and the women cacao farmers of the Alianza Cacao Peru programme, whose field knowledge anchored the agricultural classes.",
+   "visual": { "layers": ["protected_areas"], "camera": { "lng": -73.4, "lat": -9.7, "zoom": 6.8, "pitch": 0 },
+     "note": "Click an area for its name, category and creation year. Indigenous territories are deliberately not hosted in this app (RAISG licence and sensitivity) — see About & sources for the link to RAISG's own map." },
+   "numbers": [
+    { "value": "7 + 3", "label": "national protected areas (ANP) and regional conservation areas (ACR) intersecting the department",
+      "source": { "kind": "app", "method": "SERNANP map service clipped to the department, fetched 2026-11-04" } }
+   ],
+   "sources": [
+    "Partner institutions as the paper lists them: Cooley et al. (2024), sect. 2.2 p.5 and sect. 2.3.3 p.11. Funded by the NASA SERVIR programme (acknowledgments, p.19).",
+    "Protected areas: SERNANP (geo.sernanp.gob.pe), cited as source; boundaries simplified for display."
+   ]
+  },
+  {
+   "id": "explore",
+   "title": "Explore the layers yourself",
+   "text": "Switch between the vegetation classes, canopy height, forest & loss, fires and protected areas — every layer carries its source, licence and caveats in About & sources, and every number in this story is either printed in the cited paper (page recorded) or computed by this app and labelled so.",
+   "visual": { "layers": [], "camera": { "lng": -73.6, "lat": -9.5, "zoom": 6.3, "pitch": 32 }, "action": "explore" },
+   "sources": [
+    "Data report: the DATA_REPORT.md link in About & sources."
+   ]
+  }
+ ]
+}
