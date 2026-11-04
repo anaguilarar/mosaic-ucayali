@@ -30,7 +30,12 @@ try {
     for (let i = 0; i < 12; i++) { if (await page.eval(`String(window.__map.loaded() && !window.__map.isMoving())`) === 'true') break; await sleep(500); }
     const info = await page.eval(`(() => { const c = document.querySelector('.chapter[data-id="${id}"]');
       const pill = c.querySelector('.pill')?.textContent || '';
-      const chart = c.querySelector('.chapter-chart') ? (c.querySelector('.chapter-chart svg') ? 'chart ok' : 'CHART EMPTY') : '';
+      // an svg chart, or an hbars chart whose every row has a label and a value
+      const hb = c.querySelector('.chapter-chart div[role=img] > div:last-child');
+      const rows = hb ? [...hb.children] : [];
+      const hbOk = rows.length >= 2 && rows.every((r) => r.textContent.trim() !== '');
+      const chart = c.querySelector('.chapter-chart') ? (c.querySelector('.chapter-chart svg') ? 'chart ok'
+        : hbOk ? 'chart ok (' + rows.length / 2 + ' labelled bars)' : 'CHART EMPTY') : '';
       const nums = c.querySelectorAll('.story-num').length;
       return [pill, chart, nums + ' numbers'].filter(Boolean).join(' · '); })()`);
     console.log(`ch ${String(n + 1).padStart(2)} ${id.padEnd(12)}:`, await page.eval(MAPSTATE), '|', info);

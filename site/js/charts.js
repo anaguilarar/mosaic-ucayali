@@ -11,6 +11,7 @@
 //   Charts.diverging(el, { labels, up, down, above: 'Sold', below: 'Bought', mark: [3, 9], markLabel: 'Car charged' })
 //   Charts.ring(el, { value: 0.72, label: '72%', sub: 'of capacity' }) a progress ring with its total inside
 //   Charts.barList(el, [{ label: 'Berlin', value: 412 }, …], { format, thin })  a ranked list where the row is the bar
+//   Charts.hbars(el, [{ label, value, group, tip }], { format, groups })   categorical horizontal bars: every label kept in full
 //   Charts.plan(el, [{ label: 'Groceries', planned: 600, spent: 412, committed: 60 }, …], { scale: 'row' | 'plan' })  planned against spent
 //   Charts.bullet(el, [{ label: 'Bonds', value: 0.31, target: 0.25 }, …])   share against a target
 //   Charts.timeline(el, rows, kinds, { days, today, weekends })      who is away when, each kind of booking its own mark
@@ -74,6 +75,11 @@
       return k > 1 ? picks.filter((_, j) => j % k === 0) : picks;
     }
     if (n <= 1) return n ? [0] : [];
+    // thinning is for time axes only; a categorical axis keeps every label (use hbars when they do not fit)
+    if (!labels.every((l) => /\d|^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(String(l)))) {
+      console.warn('Charts: categorical x labels are not thinned; use Charts.hbars for long class names');
+      return [...Array(n).keys()];
+    }
     const longest = Math.max(...labels.map((l) => String(l).length));
     const cap = Math.max(2, Math.min(8, Math.floor(span / (longest * 7 + 18))));
     if (n <= cap) return [...Array(n).keys()];
@@ -416,6 +422,50 @@
     });
     el.appendChild(list);
   }
+  // A categorical comparison as horizontal bars: every bar keeps its full label on the left (wrapped onto
+  // more lines when needed, never truncated or thinned — thinning is for time axes only), the value with its
+  // unit at the end of the bar, a colour per group with a small legend, and a tooltip per row (row.tip).
+  // rows: [{ label, value, group, tip }]; groups: { key: { label, colour } }; max: the scale's end.
+  function hbars(el, rows, { format = fmt.int, groups = null, max = null, labelWidth = '9rem' } = {}) {
+    el.innerHTML = '';
+    const top = max ?? Math.max(...rows.map((r) => r.value)) ?? 1;
+    const reserve = `${Math.max(...rows.map((r) => format(r.value).length)) + 0.5}ch + 6px`;
+    const wrap = document.createElement('div');
+    wrap.setAttribute('role', 'img');
+    wrap.setAttribute('aria-label', rows.map((r) => `${r.label}: ${format(r.value)}`).join('; '));
+    if (groups && Object.values(groups).some((g) => g.label)) {   // colour-only groups need no legend
+      const lg = document.createElement('div');
+      lg.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 8px;font-size:12px;color:var(--muted,#5f6368)';
+      for (const g of Object.values(groups).filter((x) => x.label)) {
+        const it = document.createElement('span'); it.style.cssText = 'display:inline-flex;align-items:center;gap:6px';
+        const sw = document.createElement('span'); sw.style.cssText = `width:10px;height:10px;border-radius:2px;background:${g.colour};flex:none`;
+        it.append(sw, document.createTextNode(g.label)); lg.append(it);
+      }
+      wrap.append(lg);
+    }
+    const list = document.createElement('div');
+    list.style.cssText = `display:grid;grid-template-columns:minmax(0,min(${labelWidth},42%)) minmax(0,1fr);gap:7px 10px;align-items:center;font-size:12.5px;font-variant-numeric:tabular-nums`;
+    for (const r of rows) {
+      const lab = document.createElement('span');
+      lab.textContent = r.label;
+      lab.style.cssText = 'overflow-wrap:break-word;line-height:1.25;color:var(--ink,#1c2b3a)';
+      const track = document.createElement('span');
+      track.style.cssText = 'display:flex;align-items:center;gap:6px;min-width:0';
+      const bar = document.createElement('span');
+      const colour = (groups && groups[r.group]?.colour) || 'var(--chart-1,#2f6fdf)';
+      // the bar takes its share of the track minus room for the value label (so the value never overflows)
+      bar.style.cssText = `display:block;height:14px;border-radius:2px;background:${colour};flex:none;width:calc((100% - (${reserve})) * ${Math.max(0, r.value) / top})`;
+      const val = document.createElement('span');
+      val.textContent = format(r.value);
+      val.style.cssText = 'white-space:nowrap;font-weight:500;color:var(--ink,#1c2b3a)';
+      track.append(bar, val);
+      const tip = r.tip || `${r.label}: ${format(r.value)}`;
+      lab.title = tip; track.title = tip;
+      list.append(lab, track);
+    }
+    wrap.append(list);
+    el.append(wrap);
+  }
   // Planned against spent: the track is the plan, the fill what is spent, a lighter segment what is
   // already committed (bills to come), and an overrun past the track's end in the negative colour.
   // One row per category: label and figures on one line, the 8px track under them.
@@ -622,5 +672,5 @@
     return { get svg() { return el.querySelector(':scope > svg'); }, legend: legendEl(items, legend) };
   }
   function watch(el, draw) { if (!('ResizeObserver' in window)) return; let w = el.clientWidth; new ResizeObserver(() => { if (Math.abs(el.clientWidth - w) > 4) { w = el.clientWidth; draw(); } }).observe(el); }
-  window.Charts = { line, bars, diverging, ring, barList, plan, bullet, timeline, matrix, timeStrip, ticks, fmt };
+  window.Charts = { line, bars, hbars, diverging, ring, barList, plan, bullet, timeline, matrix, timeStrip, ticks, fmt };
 })();

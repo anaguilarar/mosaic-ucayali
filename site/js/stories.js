@@ -262,31 +262,37 @@ async function buildChart(kind, mount) {
     if (title) parent.append(el("h4", "chapter-chart-title", title));
     const d = el("div"); parent.append(d); return d;
   };
+  /* categorical charts are horizontal bars (Charts.hbars): every class keeps its full name; label
+     thinning is only for time axes. Classes are ordered by value, largest first. */
+  const CLASS_GROUPS = { forest: { label: "Forest regeneration classes", colour: "#2f7d4f" },
+                         agri: { label: "Agricultural classes", colour: "#c48a2c" } };
+  const byValue = (rows) => [...rows].sort((a, b) => b.value - a.value);
   if (kind === "rh95_by_class") {
     const t = await series("cooley_tables.json");
-    Charts.bars(host("Canopy height by class — RH95, m (Table 2a)"), {
-      labels: t.classes.map((c) => c.label.replace(" forest", "").replace("Young regrowth (purma)", "Purma").replace(" agroforestry", " AF").replace(" monocrop", " mono")),
-      values: t.classes.map((c) => c.rh95_mean), height: 160,
-      format: (v) => v.toFixed(2) + " m", highlight: 0 });
-    mount.append(el("p", "stories-note", "The paper's published means (ground returns removed); "
-      + "standard deviations and counts are in Table 2a, p.16."));
+    Charts.hbars(host("Canopy height by class — mean RH95 (Table 2a)"), byValue(t.classes.map((c) => ({
+      label: c.label, value: c.rh95_mean, group: c.group,
+      tip: `${c.label}: ${c.rh95_mean.toFixed(2)} m (sd ${c.rh95_sd.toFixed(2)} m; n = ${c.n.toLocaleString("en-US")} footprints, Table 2a)` }))),
+      { format: (v) => v.toFixed(2) + " m", groups: CLASS_GROUPS });
+    mount.append(el("p", "stories-note", "The paper's published means (ground returns removed), Table 2a p.16, "
+      + "ordered by value; hover a bar for its standard deviation and footprint count."));
   } else if (kind === "rh_ratio_by_class") {
     const t = await series("cooley_tables.json");
-    Charts.bars(host("Canopy shape — mean RH50/RH95 (Table 4a)"), {
-      labels: t.classes.map((c) => c.label.replace(" forest", "").replace("Young regrowth (purma)", "Purma").replace(" agroforestry", " AF").replace(" monocrop", " mono")),
-      values: t.classes.map((c) => c.ratio_mean), height: 150, max: 0.7,
-      format: (v) => v.toFixed(2), highlight: 1 });
-    mount.append(el("p", "stories-note", "Closer to 1 = energy returned high in the canopy. "
-      + "The paper's values, Table 4a p.17 (abstract p.1: 0.58 / 0.54 / 0.53)."));
+    Charts.hbars(host("Canopy shape — mean RH50/RH95 (Table 4a)"), byValue(t.classes.map((c) => ({
+      label: c.label, value: c.ratio_mean, group: c.group,
+      tip: `${c.label}: ${c.ratio_mean.toFixed(2)} (Table 4a; n = ${c.n.toLocaleString("en-US")} footprints, Table 2a)` }))),
+      { format: (v) => v.toFixed(2), groups: CLASS_GROUPS, max: 1 });
+    mount.append(el("p", "stories-note", "Scale 0–1: closer to 1 = energy returned high in the canopy. "
+      + "The paper's values, Table 4a p.17 (abstract p.1: 0.58 / 0.54 / 0.53), ordered by value."));
   } else if (kind === "forest_loss_classes") {
     const f = await series("forest_classes.json");
     const d = f.regions["Ucayali"] || {};
-    Charts.bars(host("Department land, km² (GEOBOSQUES classes)"), {
-      labels: Object.keys(d).map((c) => (f.classes[c] || c).split(" (")[0]),
-      values: Object.values(d), height: 150,
-      format: (v) => Math.round(v).toLocaleString() + " km²",
-      highlight: Object.keys(d).findIndex((c) => (f.classes[c] || "").startsWith("Forest loss")) });
-    mount.append(el("p", "stories-note", "This app's analysis of the GEOBOSQUES combined raster."));
+    const colours = { 1: "#2e5573", 2: "#1f6b45", 3: "#d64530", 4: "#d8c26a" };
+    Charts.hbars(host("Department land by GEOBOSQUES class, km²"), byValue(Object.entries(d).map(([c, km]) => ({
+      label: f.classes[c] || c, value: km, group: c,
+      tip: `${f.classes[c] || c}: ${Math.round(km).toLocaleString("en-US")} km² (this app's analysis)` }))),
+      { format: (v) => Math.round(v).toLocaleString("en-US") + " km²",
+        groups: Object.fromEntries(Object.keys(d).map((c) => [c, { label: "", colour: colours[c] || "#888" }])) });
+    mount.append(el("p", "stories-note", "This app's analysis of the GEOBOSQUES combined raster; ordered by area."));
   } else if (kind === "fire_detections") {
     const f = await series("fire.json");
     const d = f.snpp_detections_dept;
