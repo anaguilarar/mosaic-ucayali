@@ -19,7 +19,7 @@ the papers.
 | veg_classes | Cooley et al., "Vegetation typology classification and data set in Ucayali, Peru", v4.0, CaltechDATA, doi:10.22002/D1.2318 (files `_VegTypol_Ucayali_v4__Feb2022.geojson` + README PDF) | **CC0** ("cc-zero" on the record page) | 324 polygons digitised on 2020/2021 imagery (MAXAR 2020; Google Earth/Bing ~2015–2019, Planet-verified) | 05 |
 | gedi | GEDI02_A v002, NASA LP DAAC (collection C2142771958-LPCLOUD), via Harmony subsets; map products from the **strict** set inside the department: footprint vector tiles + 1 km mean-RH95 grid (this app's analysis) | NASA Earth science data: free and open; cite the product DOI | 25 m footprints, 2019-04-20 → 2025-07-09 (no shots 2023-04 → 2024-04); replication window = date filter | 10–14 |
 | forest_loss | **GEOBOSQUES** (MINAM PNCBMCC + SERFOR/MIDAGRI) "Mapa del Bosque Húmedo Amazónico Peruano 2000–2024": the combined national raster (EPSG:32718, 30 m; classes Hidrografía / Bosque 2024 / Pérdida 2001–2024 / No Bosque 2000 / No Monitoreado), downloaded manually in a browser (the site 403s scripts) | the product metadata's **LICENCIA field is "-"** (no licence stated); CITACIÓN required: "MINAM (PNCBMCC) y MIDAGRI (SERFOR). 'Mapa del Bosque Húmedo Amazónico Peruano, 2000–2024'. Acceso a través de GEOBOSQUES." | 30 m; baseline 2000, loss 2001–2024 lumped — **the separate annual loss raster (year field) is still to be downloaded** for the loss-year layer and the annual series | 20 |
-| landcover | **MapBiomas Perú Collection 4**, 30 m, years 2000/2005/2010/2015/2020/2024 (collection spans 1985–2025). The published storage.googleapis.com links answer **403 server-side** (verified 2026-11-04 — even their collection-3 links fail; anonymous GCS works for other buckets): files come via `prep/gee_mapbiomas_export.js` (MapBiomas' own public GEE assets) or the MapBiomas platform | **CC BY 4.0** — "Los datos de MapBiomas son de uso público, abierto y gratuito, sujetos a citación" (site footer) | 30 m; served years above | 21 (awaiting files) |
+| landcover | **MapBiomas Perú Collection 4**, 30 m, years 2000/2005/2010/2015/2020/2024 (collection spans 1985–2025). The published storage.googleapis.com links answer **403 server-side** (verified 2026-11-04 — even their collection-3 links fail; anonymous GCS works for other buckets): files come via `prep/gee_mapbiomas_export.js` (MapBiomas' own public GEE assets) or the MapBiomas platform | **CC BY 4.0** — "Los datos de MapBiomas son de uso público, abierto y gratuito, sujetos a citación" (site footer) | 30 m; served years above. Files: the six GEE exports of `prep/gee_mapbiomas_export.js` (received 2026-11-04; Ucayali bbox, EPSG:4326, 0.0002695° ≈ 30 m, uint8; value 0 = outside Peru, transparent) | 21 |
 | canopy | **ETH Global Canopy Height 2020** (Lang et al. 2023), six 3° COG tiles from the dataset's own file share (libdrive.ethz.ch, pointed to by ETH Research Collection record 10.3929/ethz-b-000609802; the record's HTML page currently errors, the share works) | **CC BY 4.0** (ETH record) | 10 m, 2020; display tiles z≤12, clicks on the 10 m raster | 22 |
 | protected_areas | **SERNANP** ArcGIS service (geoservicios.sernanp.gob.pe, peru_sernanp_0102): layer 0 ANP definitivas + layer 2 ACR, clipped to Ucayali, simplified ~90 m | SERNANP viewer terms (verbatim in §2): public-domain information, derived maps authorised citing SERNANP, no commercialisation, original data not redistributable | vectors; fetched 2026-11-04 | 23 |
 | fire | **NASA FIRMS** VIIRS 375 m active fires (S-NPP), yearly Peru CSV archives | NASA FIRMS: freely available, cite FIRMS | points; 2012–2025; ~1 km density grids | 24 |
@@ -129,6 +129,24 @@ the papers.
   **cacao has no class of its own** and falls inside "Mosaico agropecuario" (21) — so MapBiomas
   can show the paper's oil-palm class but not its two cacao classes. Recorded in the registry
   caveat and the land-cover legend.
+- **MapBiomas land cover, built 2026-11-04 (this app's analysis of MapBiomas Perú C4).** The six
+  exports cover the department in full (105,780 km² classified every year; 16–17 classes).
+  Department areas, km² (`series/lulc_areas.json`; pixel areas with a cos(latitude) correction):
+
+  | Class (code) | 2000 | 2005 | 2010 | 2015 | 2020 | 2024 |
+  |---|---|---|---|---|---|---|
+  | Bosque / Forest (3) | 84,511 | 84,291 | 83,825 | 83,235 | 82,442 | 81,409 |
+  | Bosque inundable / Flooded forest (6) | 14,201 | 14,194 | 14,197 | 13,948 | 13,461 | 12,513 |
+  | Mosaico agropecuario / Mosaic of agriculture and pasture (21) | 3,156 | 3,443 | 3,844 | 4,303 | 5,063 | 6,790 |
+  | Palma aceitera / Oil palm (35) | 2 | 12 | 44 | 316 | 508 | 590 |
+  | Pasto (beta) / Pasture (15) | 3 | 6 | 28 | 121 | 403 | 520 |
+  | Infraestructura urbana / Urban infrastructure (24) | 61 | 70 | 80 | 96 | 112 | 135 |
+
+  Class names and colours come from MapBiomas' legend CSV (Spanish "Descripcion", English
+  "Description"); the CSV is Windows-1252-encoded and is decoded as such (read as UTF-8 every accented letter, as in "Río", came out as a replacement character). Display tiles: nearest resampling and **nearest-sampled
+  overviews**, as for GEOBOSQUES, so small classes such as oil palm keep their true share when
+  zoomed out (mode overviews would erase them). Click-query stack `query/lulc_stack_30m.tif`
+  (one band per year, 20.8 MB). Tiles 5.8–8.1 MB per year.
 - **VIIRS fire series.** S-NPP only (no NOAA-20/21), confidence nominal/high, detections inside
   the department boundary; density layers are detections per km² on a ~1 km grid. Detections are
   not burned area. All counts are this app's analysis.
@@ -164,7 +182,7 @@ the papers.
   the dtype limit, no negative precipitation, decoded max = float max) now stops the pipeline on
   any lossy encoding, and `tests/climate_encoding_check.py` re-checks every stored file.
 - **Outside the department.** Every raster layer served for query (canopy 10 m COG) and every
-  thematic tile set built from a bbox clip (GEOBOSQUES; MapBiomas when it lands) is masked to the
+  thematic tile set built from a bbox clip (GEOBOSQUES, MapBiomas) is masked to the
   department boundary (pixel centre inside; nodata outside) by `common.mask_to_department`. The
   map also draws an opaque outside mask above all data layers and below the outline and labels.
   Terrain is the exception by design: its tiles are padded beyond the DEM with smoothly

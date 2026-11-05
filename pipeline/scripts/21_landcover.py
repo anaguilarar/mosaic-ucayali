@@ -61,7 +61,11 @@ def legend() -> dict:
     cls = dict(FALLBACK)
     try:
         f = common.download(LEGEND_CSV, common.WORK_ROOT / "downloads" / "mapbiomas" / "legend.csv")
-        text = f.read_text(encoding="utf-8-sig", errors="replace")
+        raw = f.read_bytes()
+        try:
+            text = raw.decode("utf-8-sig")
+        except UnicodeDecodeError:            # the published CSV is Windows-1252 ('Formación' as 0xF3)
+            text = raw.decode("cp1252")
         rows = list(csv.DictReader(io.StringIO(text), delimiter=";" if ";" in text.splitlines()[0] else ","))
         cols = {c.lower().strip(): c for c in rows[0].keys()}
         def pick(row, *names):
@@ -75,7 +79,8 @@ def legend() -> dict:
             if code is None or not code.isdigit():
                 continue
             es = pick(row, "leyenda", "descripcion", "name_es", "clase", "nombre") or FALLBACK.get(int(code), ("?",))[0]
-            en = pick(row, "legend_en", "name_en", "english") or FALLBACK.get(int(code), ("?", "?"))[1] if int(code) in FALLBACK else es
+            en = (pick(row, "description", "legend_en", "name_en", "english")
+                  or (FALLBACK[int(code)][1] if int(code) in FALLBACK else es))
             hx = pick(row, "color", "hex", "paleta") or FALLBACK.get(int(code), ("?", "?", "#999999"))[2]
             if not str(hx).startswith("#"):
                 hx = "#" + str(hx).lstrip("#")
@@ -125,8 +130,10 @@ def main():
 
         out = common.DATA / "tiles" / f"lulc_{y}.pmtiles"
         if not out.exists() or args.force:
+            # nearest-sampled overviews keep every class at its true share when zoomed out; mode
+            # overviews erase small classes such as oil palm (same choice as 20_forest_loss)
             merc = warp_to_mercator(clip, f"lulc_{y}", 12, Resampling.nearest, dtype="uint8",
-                                    nodata=0, ovr=Resampling.mode)
+                                    nodata=0, ovr=Resampling.nearest)
             cut_tiles(merc, out, f"MapBiomas Peru C4 {y}", "png", common.CFG["tiles"]["minzoom"], 12,
                       make_colormap_encoder(colormap, 0), Resampling.nearest)
             common.record("21_landcover", out)

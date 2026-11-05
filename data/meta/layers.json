@@ -349,6 +349,125 @@
    "licence": "NASA Earth science data: free and open; cite the product DOI",
    "citation": "Dubayah, R., Hofton, M., Blair, J., Armston, J., Tang, H. & Luthcke, S. (2021). GEDI L2A Elevation and Height Metrics Data Global Footprint Level V002. NASA EOSDIS Land Processes DAAC. doi:10.5067/GEDI/GEDI02_A.002",
    "caveats": "This app's analysis. Each dot is one 25 m footprint, located to about \u00b110 m. Zoomed out, a 1 km grid shows the mean RH95 of the shots in each cell; at zooms 9-10 the dots are a random sample. RH95 is GEDI's own value (no ground-return transformation, unlike the paper's Table 2a)."
+  },
+  {
+   "id": "landcover",
+   "title": "Land cover (MapBiomas)",
+   "group": "Land",
+   "type": "thematic",
+   "urls": {
+    "tiles": {
+     "2000": "tiles/lulc_2000.pmtiles",
+     "2005": "tiles/lulc_2005.pmtiles",
+     "2010": "tiles/lulc_2010.pmtiles",
+     "2015": "tiles/lulc_2015.pmtiles",
+     "2020": "tiles/lulc_2020.pmtiles",
+     "2024": "tiles/lulc_2024.pmtiles"
+    },
+    "query": "query/lulc_stack_30m.tif"
+   },
+   "years": [
+    2000,
+    2005,
+    2010,
+    2015,
+    2020,
+    2024
+   ],
+   "classes": {
+    "3": {
+     "name_es": "Bosque",
+     "name_en": "Forest",
+     "color": "#1f8d49"
+    },
+    "4": {
+     "name_es": "Bosque seco",
+     "name_en": "Dry forest",
+     "color": "#7dc975"
+    },
+    "6": {
+     "name_es": "Bosque inundable",
+     "name_en": "Flooded forest",
+     "color": "#026975"
+    },
+    "12": {
+     "name_es": "Formaci\u00f3n herb\u00e1cea",
+     "name_en": "Herbaceous formation",
+     "color": "#d6bc74"
+    },
+    "15": {
+     "name_es": "Pasto (beta)",
+     "name_en": "Pasture (beta)",
+     "color": "#edde8e"
+    },
+    "21": {
+     "name_es": "Mosaico agropecuario",
+     "name_en": "Mosaic of agriculture and pasture",
+     "color": "#ffefc3"
+    },
+    "23": {
+     "name_es": "Playa",
+     "name_en": "Beach",
+     "color": "#ffa07a"
+    },
+    "24": {
+     "name_es": "Infraestructura urbana",
+     "name_en": "Urban infrastructure",
+     "color": "#d4271e"
+    },
+    "25": {
+     "name_es": "Otra \u00e1rea antr\u00f3pica sin vegetaci\u00f3n",
+     "name_en": "Other anthropogenic non-vegetated area",
+     "color": "#db4d4f"
+    },
+    "27": {
+     "name_es": "No observado",
+     "name_en": "Not observed",
+     "color": "#ffffff"
+    },
+    "30": {
+     "name_es": "Miner\u00eda",
+     "name_en": "Mining",
+     "color": "#9c0027"
+    },
+    "33": {
+     "name_es": "R\u00edo, lago u oc\u00e9ano",
+     "name_en": "River, lake or ocean",
+     "color": "#2532e4"
+    },
+    "35": {
+     "name_es": "Palma aceitera",
+     "name_en": "Oil palm",
+     "color": "#9065d0"
+    },
+    "40": {
+     "name_es": "Arroz (beta)",
+     "name_en": "Rice (beta)",
+     "color": "#c71585"
+    },
+    "51": {
+     "name_es": "Herbazal inundable de tierras bajas",
+     "name_en": "Lowland flooded grassland",
+     "color": "#5faf92"
+    },
+    "66": {
+     "name_es": "Matorral y otros arbustales",
+     "name_en": "Shrubland and other shrub vegetation",
+     "color": "#a89358"
+    },
+    "68": {
+     "name_es": "Otra \u00e1rea natural sin vegetaci\u00f3n",
+     "name_en": "Other natural non-vegetated area",
+     "color": "#e97a7a"
+    }
+   },
+   "minzoom": 5,
+   "maxzoom": 12,
+   "source": "MapBiomas Per\u00fa Collection 4 (Landsat, 30 m), national rasters clipped to Ucayali",
+   "period": "collection spans 1985-2025; the app serves 2000/2005/2010/2015/2020/2024",
+   "licence": "CC BY 4.0 - 'Los datos de MapBiomas son de uso p\u00fablico, abierto y gratuito, sujetos a citaci\u00f3n' (site footer)",
+   "citation": "MapBiomas Per\u00fa Collection 4 (peru.mapbiomas.org). Official class palette.",
+   "caveats": "Oil palm is its own class (35, Palma aceitera); cacao and other specific crops have no class and fall inside 'Mosaico agropecuario' (21) - relevant when relating classes to Cooley et al. (2024). Class areas are this app's analysis."
   }
  ]
 }

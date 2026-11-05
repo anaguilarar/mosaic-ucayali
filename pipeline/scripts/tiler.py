@@ -45,9 +45,13 @@ def clip_source(src_path: Path, out_name: str, bbox: tuple) -> Path:
         prof = src.profile | dict(width=int(win.width), height=int(win.height),
                                   transform=src.window_transform(win), tiled=True,
                                   blockxsize=256, blockysize=256, compress="DEFLATE")
-        with rasterio.open(out, "w", **prof) as dst:
+        with rasterio.open(out, "w", **prof) as dst:      # strip-wise: the source is never whole in memory
+            H, strip = int(win.height), 1024
             for i in range(1, src.count + 1):
-                dst.write(src.read(i, window=win, boundless=True), i)
+                for r0 in range(0, H, strip):
+                    h = min(strip, H - r0)
+                    sw = Window(win.col_off, win.row_off + r0, win.width, h)
+                    dst.write(src.read(i, window=sw, boundless=True), i, window=Window(0, r0, win.width, h))
     log.info("clipped %s -> %s (%dx%d)", Path(src_path).name, out.name, win.width, win.height)
     return out
 
