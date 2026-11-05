@@ -3,6 +3,8 @@ pipeline/config.toml
 __pycache__/
 *.log
 .env
+# internal planning notes (kept locally, never published)
+PLAN.md
 
 # data files that go to Hugging Face, not GitHub (the SITE list in site/js/config.js is the
 # source of truth; 91_publish_check.py reports the split). Tiles are ignored except the small

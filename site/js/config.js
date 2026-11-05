@@ -24,6 +24,6 @@ export const dataUrl = (path) => (allLocal || onSite(path) ? LOCAL_DATA : HF_DAT
 
 /* never published: with the published routing the app treats these as absent without requesting them,
    so the public site logs no 404s; locally they are probed as usual. (Empty for now - RAISG Indigenous
-   territories would go here if a local display copy is ever prepared; decision D6 keeps them out.) */
+   territories would go here if a local display copy is ever prepared; their licence keeps them out.) */
 const WITHHELD = [];
 export const isWithheld = (path) => !allLocal && WITHHELD.includes(path);

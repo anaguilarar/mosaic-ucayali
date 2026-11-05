@@ -1,7 +1,7 @@
 # MOSAIC Ucayali Explorer — data report
 
-Status: Phase 1 (scaffold, base layers, GEDI pilot). Started 2026-11-04. Owner: Andres Aguilar
-(CGIAR). This report records, for every layer the app serves: the source as found, the licence as
+Status: release candidate, 2026-11-05 (pending: GEOBOSQUES annual loss raster; DEM provenance; OSM
+labels). Owner: Andres Aguilar (CGIAR). This report records, for every layer the app serves: the source as found, the licence as
 stated by that source, processing steps, and the method notes behind any number the app prints.
 Rules: published numbers appear only as printed in the cited paper, with the page recorded;
 numbers computed by this pipeline are labelled **"this app's analysis"**; no causal claims beyond
@@ -375,14 +375,15 @@ windows of the Andean fringe.
   (filter methodology followed by Cooley et al.).
 - Lang, N., Jetz, W., Schindler, K. & Wegner, J.D. (2023). A high-resolution canopy height model
   of the Earth. *Nature Ecology & Evolution* 7:1778–1789. doi:10.1038/s41559-023-02206-6
-  (CC BY 4.0 per the ETH Research Collection record; planned Phase-3 layer).
+  (CC BY 4.0 per the ETH Research Collection record; the canopy-height layer).
 - Instituto Geográfico Nacional (IGN). Limites Departamentales / Distritales. Plataforma Nacional
   de Datos Abiertos, datosabiertos.gob.pe (ODC-By).
 - MapBiomas Perú. Colección 4 de mapas anuales de cobertura y uso del suelo; Colección 2 de
   fuego. peru.mapbiomas.org (CC BY 4.0, "sujetos a citación").
 - GEOBOSQUES — Plataforma de monitoreo de los cambios sobre la cobertura de los bosques
-  (MINAM/SERFOR), geobosques.minam.gob.pe (licence as stated on the download page — pending
-  transcription).
+  (MINAM/SERFOR), geobosques.minam.gob.pe. Product metadata: LICENCIA "-" (no licence stated);
+  required citation: "MINAM (PNCBMCC) y MIDAGRI (SERFOR). 'Mapa del Bosque Húmedo Amazónico
+  Peruano, 2000–2024'. Acceso a través de GEOBOSQUES."
 - SERNANP. Áreas Naturales Protegidas / Áreas de Conservación Regional. geo.sernanp.gob.pe
   (public-domain information; derived maps with citation).
 - NASA FIRMS. VIIRS 375 m active fire product (VNP14IMGT), country archives.

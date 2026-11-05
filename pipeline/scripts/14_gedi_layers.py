@@ -1,5 +1,5 @@
 """Step 14 - GEDI map products from the STRICT shot set (the paper's three filters plus
-quality_flag = 1 and degrade_flag = 0), full mission window (decision D4), shots inside the
+quality_flag = 1 and degrade_flag = 0), full mission window (the app's map products), shots inside the
 department only:
   data/tiles/gedi_footprints.pmtiles  vector tiles, layer 'footprints': rh95 and rh50 in decimetres,
                                       date as yyyymmdd. Every shot at z11 (overzoomed beyond); a fixed
