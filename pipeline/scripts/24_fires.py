@@ -1,12 +1,14 @@
 """Step 24 - fire: VIIRS active fires (NASA FIRMS country archives, S-NPP, 2012-2025) and
-MapBiomas Peru burned area (Collection 1, 2013-2024, CC BY 4.0).
+MapBiomas Peru burned area (Fire Collection 2, 2013-2024, CC BY 4.0).
 
 VIIRS: downloads the yearly Peru CSVs from FIRMS, keeps nominal/high-confidence detections in
 the area bbox, writes per-year density tiles (fires per km2 on a ~1 km grid; fired_YYYY.pmtiles),
 per-year point GeoJSONs (data/fire/points_YYYY.geojson, drawn from zoom 10) and a detections
 series. MapBiomas burned: the published storage.googleapis.com links answer 403 server-side
-(2026-11-04); the step uses files already in <work>/downloads/mapbiomas_fire/ (direct download
-retried first) and otherwise skips the burned part with instructions, so VIIRS still ships.
+(2026-11-04), so the files come from prep/gee_mapbiomas_export.js (Fire Collection 2 annual
+burned, value 1 = burned) into <work>/downloads/mapbiomas_fire/; without them the step skips
+the burned part with instructions, so VIIRS still ships. Burned tiles use nearest-sampled
+overviews: zoomed out, burned pixels keep their true share (a max pyramid would overstate them).
 
 Usage:  python scripts/24_fires.py [--area pilot|full] [--force]
 """
@@ -30,8 +32,6 @@ from tiler import clip_source, cut_tiles, encode_png, max_levels, warp_to_mercat
 VIIRS_YEARS = list(range(2012, 2026))
 VIIRS_URL = "https://firms.modaps.eosdis.nasa.gov/data/country/viirs-snpp/{y}/viirs-snpp_{y}_Peru.csv"
 BURNED_YEARS = list(range(2013, 2025))
-BURNED_URL = ("https://storage.googleapis.com/shared-development-storage/COLLECTIONS/PERU/FIRE/"
-              "COLLECTION1/mbfire_col1_peru_annual_burned/mbfire_col1_peru_annual_burned-burned_area_{y}.tif")
 GRID_DEG = 0.01                      # ~1.1 km density cells
 DENSITY_BREAKS = [1, 3, 10, 30, 100]
 DENSITY_COLORS = ["#f8c471", "#eb984e", "#e55064", "#b03a2e", "#78281f"]
@@ -103,14 +103,10 @@ def burned(args, dept_geom):
     missing = []
     for y in BURNED_YEARS:
         dest = common.WORK_ROOT / "downloads" / "mapbiomas_fire" / f"burned_area_{y}.tif"
-        try:
-            nat = common.download(BURNED_URL.format(y=y), dest)
-        except Exception:
-            if dest.exists():
-                nat = dest
-            else:
-                missing.append(y)
-                continue
+        if not dest.exists():
+            missing.append(y)
+            continue
+        nat = dest
         clip = common.mask_to_department(clip_source(nat, f"burned_{y}", common.bbox()),
                                          common.WORK / f"burned_{y}_dept.tif", nodata=0)
         burned_km2[str(y)] = round(sum(common.class_areas_km2(clip, {"d": dept_geom})["d"].values()), 1)
@@ -118,17 +114,16 @@ def burned(args, dept_geom):
         if out.exists() and not args.force:
             continue
         merc = warp_to_mercator(clip, f"burned_{y}_{common.AREA}", 12, Resampling.nearest,
-                                dtype="uint8", nodata=0)
-        levels = max_levels(merc, common.CFG["tiles"]["minzoom"], 12)
+                                dtype="uint8", nodata=0, ovr=Resampling.nearest)
         colormap = np.zeros((256, 4), "u1"); colormap[1] = (120, 32, 18, 235)
         enc = lambda data: (None if not colormap[np.clip(data[0], 0, 1)][..., 3].any()
                             else encode_png(colormap[np.clip(data[0], 0, 1)]))
         cut_tiles(merc, out, f"MapBiomas burned {y}", "png", common.CFG["tiles"]["minzoom"], 12,
-                  enc, Resampling.nearest, levels=levels)
+                  enc, Resampling.nearest)
         common.record("24_fires", out)
     if missing:
-        log.warning("MapBiomas burned rasters missing for %s: the published GCS links answer 403 "
-                    "(2026-11-04). Export them with prep/gee_mapbiomas_export.js (or the MapBiomas "
+        log.warning("MapBiomas burned rasters missing for %s (the published GCS links answer 403, "
+                    "2026-11-04). Export them with prep/gee_mapbiomas_export.js (or the MapBiomas "
                     "platform) into %s as burned_area_<YEAR>.tif and re-run; VIIRS layers are built.",
                     missing, common.WORK_ROOT / "downloads" / "mapbiomas_fire")
     return burned_km2
@@ -169,13 +164,13 @@ def main():
             "title": "Burned area (MapBiomas)", "group": "Fire", "type": "thematic",
             "urls": {"tiles": {y: f"tiles/burned_{y}.pmtiles" for y in burned_km2}},
             "years": [int(y) for y in burned_km2],
-            "source": "MapBiomas Perú Fuego Collection 1 annual burned area, 30 m, department clip",
+            "source": "MapBiomas Perú Fuego Collection 2 annual burned area (GEE export), 30 m, department clip",
             "period": "2013-2024", "units": "burned at least once in the year",
             "licence": "CC BY 4.0 (MapBiomas: public, open and free use, subject to citation)",
-            "citation": "MapBiomas Perú - Colección 1 de fuego (peru.mapbiomas.org)",
-            "caveats": "Landsat-based: misses small or low-severity burns; Collection 2 "
-                       "(1990-2025) exists as GEE assets and can replace this later. Burned km² "
-                       "per year is this app's analysis."})
+            "citation": "MapBiomas Perú - Colección 2 de fuego (peru.mapbiomas.org)",
+            "caveats": "Landsat-based: misses small or low-severity burns. Zoomed out, each pixel "
+                       "samples one 30 m cell, so burned area keeps its true share and small burns "
+                       "appear only when zoomed in. Burned km² per year is this app's analysis."})
 
 
 if __name__ == "__main__":

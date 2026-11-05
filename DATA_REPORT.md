@@ -23,7 +23,7 @@ the papers.
 | canopy | **ETH Global Canopy Height 2020** (Lang et al. 2023), six 3° COG tiles from the dataset's own file share (libdrive.ethz.ch, pointed to by ETH Research Collection record 10.3929/ethz-b-000609802; the record's HTML page currently errors, the share works) | **CC BY 4.0** (ETH record) | 10 m, 2020; display tiles z≤12, clicks on the 10 m raster | 22 |
 | protected_areas | **SERNANP** ArcGIS service (geoservicios.sernanp.gob.pe, peru_sernanp_0102): layer 0 ANP definitivas + layer 2 ACR, clipped to Ucayali, simplified ~90 m | SERNANP viewer terms (verbatim in §2): public-domain information, derived maps authorised citing SERNANP, no commercialisation, original data not redistributable | vectors; fetched 2026-11-04 | 23 |
 | fire | **NASA FIRMS** VIIRS 375 m active fires (S-NPP), yearly Peru CSV archives | NASA FIRMS: freely available, cite FIRMS | points; 2012–2025; ~1 km density grids | 24 |
-| burned_area | **MapBiomas Perú Fuego Collection 1** annual burned, 30 m (same blocked bucket — via the GEE export; Collection 2 covers 1990–2025 as GEE assets for a later upgrade) | **CC BY 4.0** | 30 m; 2013–2024 | 24 (awaiting files) |
+| burned_area | **MapBiomas Perú Fuego Collection 2** annual burned area (value 1 = burned), 30 m, exported with `prep/gee_mapbiomas_export.js` from MapBiomas' public GEE asset (the Collection 1 bucket answers 403); files received 2026-11-04 (Ucayali bbox, EPSG:4326, 0.0002695°, uint8) | **CC BY 4.0** | 30 m; 2013–2024 (Collection 2 spans 1990–2025) | 24 |
 | precip | **CHIRPS v3.0** daily precipitation (final RNL, ERA5-disaggregated), 0.05°, via the aaguilar90 Hugging Face zarr mirror of UCSB CHC data; monthly/annual aggregates clipped to the bbox | **CC BY 4.0** (mirror metadata; CHC data policy) | 0.05°; 1981-01 → latest (2026-08 at build); last 2–3 months provisional | 25 |
 | temperature | **CHIRTS-ERA5** daily Tmax/Tmin, 0.05°, same mirror; Tmean = (Tmax+Tmin)/2 | **CC BY 4.0** | 0.05°; 1981-01 → latest | 25 |
 | spi3 | **SPI-3** computed from the CHIRPS monthly stack (method in §3) | derived from CHIRPS (CC BY 4.0) | 0.05°; 1981-03 → latest; calibration 1991–2020 | 26 |
@@ -147,6 +147,18 @@ the papers.
   overviews**, as for GEOBOSQUES, so small classes such as oil palm keep their true share when
   zoomed out (mode overviews would erase them). Click-query stack `query/lulc_stack_30m.tif`
   (one band per year, 20.8 MB). Tiles 5.8–8.1 MB per year.
+- **MapBiomas burned area, built 2026-11-04 (this app's analysis of MapBiomas Fuego C2).**
+  Burned at least once in the year, department, km² (`series/fire.json`): 2013 424.5 · 2014
+  446.5 · 2015 451.2 · 2016 512.4 · 2017 515.8 · 2018 332.2 · 2019 460.7 · 2020 549.9 · 2021
+  660.3 · 2022 549.5 · 2023 760.3 · **2024 786.3** (the largest in the series). Tiles use
+  **nearest-sampled overviews** (as for GEOBOSQUES and MapBiomas land cover): zoomed out, burned
+  pixels keep their true share, so small burns appear only when zoomed in; the earlier max
+  pyramid would have coloured a zoomed-out pixel if any 30 m cell under it burned. Tiles
+  0.7–1.0 MB per year.
+- **Active-fire points in tilted views (fixed 2026-11-04).** The points were hidden below zoom
+  10 by a layer minzoom; in a pitched view the far tiles load one zoom lower, so the far half
+  of the view lost its points (39 of ~900 drawn in a test view). They are now hidden by a
+  camera-zoom step on their opacity instead (2,268 drawn in the same view).
 - **VIIRS fire series.** S-NPP only (no NOAA-20/21), confidence nominal/high, detections inside
   the department boundary; density layers are detections per km² on a ~1 km grid. Detections are
   not burned area. All counts are this app's analysis.
@@ -360,7 +372,7 @@ windows of the Andean fringe.
   (CC BY 4.0 per the ETH Research Collection record; planned Phase-3 layer).
 - Instituto Geográfico Nacional (IGN). Limites Departamentales / Distritales. Plataforma Nacional
   de Datos Abiertos, datosabiertos.gob.pe (ODC-By).
-- MapBiomas Perú. Colección 4 de mapas anuales de cobertura y uso del suelo; Colección 1 de
+- MapBiomas Perú. Colección 4 de mapas anuales de cobertura y uso del suelo; Colección 2 de
   fuego. peru.mapbiomas.org (CC BY 4.0, "sujetos a citación").
 - GEOBOSQUES — Plataforma de monitoreo de los cambios sobre la cobertura de los bosques
   (MINAM/SERFOR), geobosques.minam.gob.pe (licence as stated on the download page — pending

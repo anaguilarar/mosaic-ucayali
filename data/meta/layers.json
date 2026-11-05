@@ -468,6 +468,48 @@
    "licence": "CC BY 4.0 - 'Los datos de MapBiomas son de uso p\u00fablico, abierto y gratuito, sujetos a citaci\u00f3n' (site footer)",
    "citation": "MapBiomas Per\u00fa Collection 4 (peru.mapbiomas.org). Official class palette.",
    "caveats": "Oil palm is its own class (35, Palma aceitera); cacao and other specific crops have no class and fall inside 'Mosaico agropecuario' (21) - relevant when relating classes to Cooley et al. (2024). Class areas are this app's analysis."
+  },
+  {
+   "id": "burned_area",
+   "title": "Burned area (MapBiomas)",
+   "group": "Fire",
+   "type": "thematic",
+   "urls": {
+    "tiles": {
+     "2013": "tiles/burned_2013.pmtiles",
+     "2014": "tiles/burned_2014.pmtiles",
+     "2015": "tiles/burned_2015.pmtiles",
+     "2016": "tiles/burned_2016.pmtiles",
+     "2017": "tiles/burned_2017.pmtiles",
+     "2018": "tiles/burned_2018.pmtiles",
+     "2019": "tiles/burned_2019.pmtiles",
+     "2020": "tiles/burned_2020.pmtiles",
+     "2021": "tiles/burned_2021.pmtiles",
+     "2022": "tiles/burned_2022.pmtiles",
+     "2023": "tiles/burned_2023.pmtiles",
+     "2024": "tiles/burned_2024.pmtiles"
+    }
+   },
+   "years": [
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "source": "MapBiomas Per\u00fa Fuego Collection 2 annual burned area (GEE export), 30 m, department clip",
+   "period": "2013-2024",
+   "units": "burned at least once in the year",
+   "licence": "CC BY 4.0 (MapBiomas: public, open and free use, subject to citation)",
+   "citation": "MapBiomas Per\u00fa - Colecci\u00f3n 2 de fuego (peru.mapbiomas.org)",
+   "caveats": "Landsat-based: misses small or low-severity burns. Zoomed out, each pixel samples one 30 m cell, so burned area keeps its true share and small burns appear only when zoomed in. Burned km\u00b2 per year is this app's analysis."
   }
  ]
 }

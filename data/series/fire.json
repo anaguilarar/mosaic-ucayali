@@ -15,6 +15,19 @@
   "2024": 17468,
   "2025": 9131
  },
- "burned_km2_dept": {},
+ "burned_km2_dept": {
+  "2013": 424.5,
+  "2014": 446.5,
+  "2015": 451.2,
+  "2016": 512.4,
+  "2017": 515.8,
+  "2018": 332.2,
+  "2019": 460.7,
+  "2020": 549.9,
+  "2021": 660.3,
+  "2022": 549.5,
+  "2023": 760.3,
+  "2024": 786.3
+ },
  "caveats": "VIIRS S-NPP only (NOAA-20/21 excluded for a consistent series), confidence nominal/high, inside the department boundary; this app's analysis"
 }

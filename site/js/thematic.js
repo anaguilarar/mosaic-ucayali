@@ -147,11 +147,14 @@ async function loadPoints() {
       const gj = await (await fetch(dataUrl(`fire/points_${y}.geojson`))).json();
       if (!map.getSource("fire-points")) {
         map.addSource("fire-points", { type: "geojson", data: gj });
+        // shown from points_from_zoom by a camera-zoom step on opacity, not a layer minzoom: in a
+        // pitched view the far tiles load one zoom lower and a minzoom would drop their points
+        const from = state.reg.fire?.points_from_zoom ?? 10;
         map.addLayer({ id: "fire-points", type: "circle", source: "fire-points",
-          minzoom: (state.reg.fire?.points_from_zoom ?? 10),
           paint: { "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 2, 13, 4.5],
-                   "circle-color": "#e55064", "circle-opacity": 0.75,
-                   "circle-stroke-color": "#7f1d2e", "circle-stroke-width": 0.5 } },
+                   "circle-color": "#e55064", "circle-opacity": ["step", ["zoom"], 0, from, 0.75],
+                   "circle-stroke-color": "#7f1d2e", "circle-stroke-width": 0.5,
+                   "circle-stroke-opacity": ["step", ["zoom"], 0, from, 1] } },
           map.getLayer("dim") ? "dim" : undefined);              // under the outside mask
       } else {
         map.getSource("fire-points").setData(gj);
@@ -220,8 +223,9 @@ function renderLegend() {
       (lg.colors || []).map((c, i) => [c, `≤ ${lg.breaks[i]} fires/km²`]),
       "VIIRS 375 m, confidence nominal/high · points from zoom 10");
   } else if (state.active === "burned_area") {
-    legendBox(`Burned at least once in ${y}`, [["rgb(120,32,18)", "burned (MapBiomas fuego, 30 m)"]],
-      "CC BY 4.0 · Landsat-based; misses small or low-severity burns");
+    legendBox(`Burned at least once in ${y}`, [["rgb(120,32,18)", "burned (MapBiomas Fuego C2, 30 m)"]],
+      "CC BY 4.0 · Landsat-based; misses small or low-severity burns · zoomed out, each pixel samples "
+      + "one 30 m cell, so small burns appear only when zoomed in");
   }
 }
 
@@ -349,18 +353,19 @@ async function showPanel(lngLat, open) {
     $("#cellTitle").textContent = isBurn ? "Burned area · department" : "Active fires · department (S-NPP)";
     $("#cellHint").textContent = reg.source;
     const unit = isBurn ? "km²" : "detections";
+    const recordYear = years.reduce((a, b) => (data[b] > data[a] ? b : a), years[0]);
     body.append(el("div", "kpis", `
       <div class="lead"><div class="label">${y} · department</div>
         <div class="value num">${Math.round(data[String(y)] ?? 0).toLocaleString()} <span class="unit">${unit}</span></div></div>
       <div><div class="label">Record year</div>
-        <div class="value num" style="font-size:18px">${Math.round(Math.max(...Object.values(data))).toLocaleString()}</div></div>`));
+        <div class="value num" style="font-size:18px">${recordYear} <span class="unit">(${Math.round(data[recordYear]).toLocaleString()} ${unit})</span></div></div>`));
     const block = el("div", "chart-block");
     block.append(el("h3", null, isBurn ? "Burned area per year (km²)" : "S-NPP detections per year"));
     const mount = el("div"); block.append(mount);
     Charts.bars(mount, { labels: years.map((x) => (+x % 5 === 0 ? x : "")), values: Object.values(data),
                          height: 150, format: (v) => Math.round(v).toLocaleString(),
                          highlight: years.indexOf(String(y)) });
-    block.append(el("p", "meta", f.caveats || reg.caveats || ""));
+    block.append(el("p", "meta", (isBurn ? reg.caveats : f.caveats) || reg.caveats || ""));
     body.append(block);
   }
   if (open) panel.hidden = false;
