@@ -31,7 +31,7 @@
    "citation": "Santini, W., Delort-Ylla, A., Lavado-Casimiro, W., Camenen, B., Roussillon, J., Pérez Arévalo, J.J., Molina-Carpio, J. & Martinez, J.M. (2026). Hydrology and Earth System Sciences 30:3367–3397 (CC BY)",
    "doi": "10.5194/hess-30-3367-2026",
    "layers": [],
-   "camera": { "lng": -74.4, "lat": -8.9, "zoom": 8, "pitch": 0 }
+   "data_note": "The study's data are not available in this app."
   },
   {
    "id": "balling_2026_planform",
@@ -41,14 +41,19 @@
    "caveat": "The authors themselves flag the Ucayali value as likely inflated: centerline-distance migration picks up classification noise, cutoffs and avulsions (p.22), and ≈1,176 m yr⁻¹ exceeds earlier Landsat-based estimates of 36–750 m yr⁻¹ (p.23). The planform metrics are not validated in situ (abstract, p.1). Read it as 'the Ucayali is the basin's most dynamic large river', not as a precise rate.",
    "citation": "van Rijt, I., Balling, J. & Reiche, J. (2026). Assessment of River Planform Dynamics in the Amazon Basin Using Sentinel-1 SAR Data (2017–2025). Remote Sensing 18:2075 (CC BY)",
    "doi": "10.3390/rs18132075",
-   "layers": [],
-   "camera": { "lng": -74.2, "lat": -9.6, "zoom": 9, "pitch": 0 }
+   "layers": ["landcover"],
+   "camera": { "bounds": [-74.42, -9.72, -74.05, -9.33], "pitch": 0 },
+   "steps": [
+    { "label": "Show 2000 on the map", "layer": "landcover", "year": 2000 },
+    { "label": "Show 2024 on the map", "layer": "landcover", "year": 2024 }
+   ],
+   "map_note": "Map: this app's MapBiomas land-cover layer (water class, 2000 vs 2024), for visual context only; the study's own channel data are not available in this app. The view is a meandering reach of the upper Ucayali in Iparia district (Coronel Portillo); the river is the blue class."
   },
   {
    "id": "swat_amazon_model",
    "kind": "explore",
    "question": "Could land-use change in Ucayali be linked to river flows and sediment with a model?",
-   "finding": "SWAT-Amazon v1.0 is the regionally adapted SWAT2012 used by Santini et al. (2026): a Fortran executable plus an R workflow, adding Muskingum-with-variable-K, kinematic- and diffusive-wave routing and new sand/fine-sediment routing modules built for Amazonian floodplains (repository README). It is the natural tool for a future question this app does not yet answer: what the forest-loss patterns shown here mean for water and sediment downstream.",
+   "finding": "SWAT-Amazon v1.0 is the regionally adapted SWAT2012 used by Santini et al. (2026): a Fortran executable plus an R workflow, adding Muskingum-with-variable-K, kinematic- and diffusive-wave routing and new sand/fine-sediment routing modules built for Amazonian floodplains (repository README). It could be used to study how forest loss affects water and sediment downstream; nothing from the model is shown in this app.",
    "caveat": "A model framework, not a finding — nothing from it is shown on this map yet. Version in bibliography: SWAT-Amazon v1.0 (william-santini/SWAT-Amazon, commit 231c5e5).",
    "citation": "Santini, W. SWAT-Amazon v1.0 (github.com/william-santini/SWAT-Amazon); described in Santini et al. (2026), HESS 30:3367–3397",
    "doi": "10.5194/hess-30-3367-2026",

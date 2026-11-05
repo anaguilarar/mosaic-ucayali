@@ -358,7 +358,8 @@ function renderStudies(body) {
   for (const s of [...state.stories.filter(hit), ...state.stories.filter((s) => !hit(s))]) body.append(card(s));
   body.append(el("p", "stories-note",
     "Published findings quote the cited paper (page and figure recorded in studies.json); " +
-    "explore cards are open questions, not claims."));
+    "explore cards are open questions, not claims. <strong>Map</strong> cards open a layer of this app; " +
+    "<strong>Reference</strong> cards cite a study whose data are not in this app."));
 }
 
 function card(s) {
@@ -366,9 +367,13 @@ function card(s) {
   c.dataset.kind = s.kind;
   const head = el("button", "story-head");
   head.setAttribute("aria-expanded", String(state.expanded === s.id));
+  // second pill: does the card open map data ("Map") or only cite the study ("Reference")?
+  const opensMap = (s.layers || []).some((id) => state.hooks.overlayAvailable(id));
+  const use = el("span", "pill", opensMap ? "Map" : "Reference");
+  use.title = opensMap ? "Opens a layer of this app on the map" : "No map layer: the study's data are not in this app";
   head.append(el("span", "story-q", s.question),
               el("span", "pill " + (s.kind === "published" ? "validated" : ""),
-                 s.kind === "published" ? "study" : "explore"));
+                 s.kind === "published" ? "study" : "explore"), use);
   head.addEventListener("click", () => { state.expanded = state.expanded === s.id ? null : s.id; render(); });
   c.append(head);
 
@@ -388,7 +393,14 @@ function card(s) {
   const layers = (s.layers || []).filter((id) => state.hooks.overlayAvailable(id));
   const missing = (s.layers || []).filter((id) => !state.hooks.overlayAvailable(id));
   const actions = el("div", "story-actions");
-  if (layers.length || s.camera || s.open_panel) {
+  if (layers.length && s.steps?.length) {
+    // each step: { label, layer, time, camera } - e.g. the same layer in two years
+    for (const st of s.steps.filter((x) => !x.layer || state.hooks.overlayAvailable(x.layer))) {
+      const chip = el("button", "story-show", st.label);
+      chip.addEventListener("click", () => applyCard({ ...s, ...st }, st.layer || layers[0]));
+      actions.append(chip);
+    }
+  } else if (layers.length) {
     const btn = el("button", "story-show", "Show me on the map");
     btn.addEventListener("click", () => applyCard(s, layers[0]));
     actions.append(btn);
@@ -398,10 +410,10 @@ function card(s) {
       chip.addEventListener("click", () => applyCard(s, id));
       actions.append(chip);
     }
-  } else {
-    actions.append(el("span", "meta", "Not in the app yet — no layer to show."));
   }
-  bd.append(actions);
+  if (actions.childElementCount) bd.append(actions);
+  if (s.map_note) bd.append(el("p", "meta", s.map_note));
+  if (!layers.length) bd.append(el("p", "meta", s.data_note || "No map layer for this card."));
   if (missing.length) bd.append(el("p", "meta", "Layer not built in this copy: " + missing.join(", ")));
   c.append(bd);
   return c;
@@ -415,10 +427,15 @@ async function applyCard(s, layerId) {
     h.presetClimate?.(p);
   }
   if (layerId) await h.setOverlay(layerId);
-  if (s.camera) {
+  if (layerId && s.year != null) await h.presetTime?.(layerId, s.year);
+  /* Studies only: close so the map state (and its legend) is in full view */
+  setOpen(false);
+  if (s.camera?.bounds) {                // [w, s, e, n], fitted after the drawer has closed
+    const [w, so, e, n] = s.camera.bounds;
+    h.map.fitBounds([[w, so], [e, n]], { padding: 40, pitch: s.camera.pitch ?? 0, bearing: 0,
+                                          duration: 1400, freezeElevation: true });
+  } else if (s.camera) {
     h.map.flyTo({ center: [s.camera.lng, s.camera.lat], zoom: s.camera.zoom ?? 8,
                   pitch: s.camera.pitch ?? 0, bearing: 0, duration: 1400, freezeElevation: true });
   }
-  /* Studies only: close so the map state (and its legend) is in full view */
-  setOpen(false);
 }
