@@ -232,7 +232,7 @@ function updateAttrib() {
                   gedi: " · NASA GEDI L2A v002",
                   landcover: " · MapBiomas Perú C4 (CC BY 4.0)",
                   forest_loss: " · GEOBOSQUES (MINAM/SERFOR)",
-                  fire: " · NASA FIRMS VIIRS", burned_area: " · MapBiomas fuego (CC BY 4.0)",
+                  fire: " · NASA FIRMS VIIRS", burned_area: " · MapBiomas Fuego C2 (CC BY 4.0)",
                   protected_areas: " · SERNANP",
                   precip: " · CHIRPS v3 (UCSB CHC, CC BY 4.0)", temperature: " · CHIRTS-ERA5 (UCSB CHC)",
                   spi3: " · SPI-3 from CHIRPS v3" };
@@ -547,6 +547,13 @@ function buildAbout() {
 
 /* ---------------- ui wiring ---------------- */
 function wireUI() {
+  // the legend sits above the time bar by the bar's real height (site.css, --timebar-h)
+  const tb = $("#timebar");
+  if (tb && window.ResizeObserver) {
+    new ResizeObserver(() => {
+      if (tb.offsetHeight) document.body.style.setProperty("--timebar-h", tb.offsetHeight + "px");
+    }).observe(tb);
+  }
   $("#exag").addEventListener("input", (e) => {
     const v = +e.target.value;
     $("#exagVal").textContent = "×" + v.toFixed(1);

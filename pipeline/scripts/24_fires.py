@@ -7,8 +7,9 @@ per-year point GeoJSONs (data/fire/points_YYYY.geojson, drawn from zoom 10) and 
 series. MapBiomas burned: the published storage.googleapis.com links answer 403 server-side
 (2026-11-04), so the files come from prep/gee_mapbiomas_export.js (Fire Collection 2 annual
 burned, value 1 = burned) into <work>/downloads/mapbiomas_fire/; without them the step skips
-the burned part with instructions, so VIIRS still ships. Burned tiles use nearest-sampled
-overviews: zoomed out, burned pixels keep their true share (a max pyramid would overstate them).
+the burned part with instructions, so VIIRS still ships. Burned tiles: at z12 (~30 m pixels)
+each burned cell as it is; zoomed out, each pixel shows the share of its area that burned (float
+average of the 0/1 cells), so the layer keeps its true extent at every zoom.
 
 Usage:  python scripts/24_fires.py [--area pilot|full] [--force]
 """
@@ -32,6 +33,9 @@ from tiler import clip_source, cut_tiles, encode_png, max_levels, warp_to_mercat
 VIIRS_YEARS = list(range(2012, 2026))
 VIIRS_URL = "https://firms.modaps.eosdis.nasa.gov/data/country/viirs-snpp/{y}/viirs-snpp_{y}_Peru.csv"
 BURNED_YEARS = list(range(2013, 2025))
+BURNED_FULL_ZOOM = 12                # ~30 m pixels: every burned cell shown as it is
+BURNED_BREAKS = [0.02, 0.05, 0.15, 0.35, 0.75, 1.0]          # share of the pixel's area that burned
+BURNED_COLORS = ["#fbe3c8", "#f6b98a", "#ec8a55", "#d4562f", "#a8301c", "#782012"]
 GRID_DEG = 0.01                      # ~1.1 km density cells
 DENSITY_BREAKS = [1, 3, 10, 30, 100]
 DENSITY_COLORS = ["#f8c471", "#eb984e", "#e55064", "#b03a2e", "#78281f"]
@@ -44,6 +48,24 @@ def density_encoder():
         lut[i] = hex2rgb(c) + (230,)
     def enc(data):
         rgba = lut[np.clip(data[0], 0, len(DENSITY_COLORS))]
+        if not rgba[..., 3].any():
+            return None
+        return encode_png(rgba)
+    return enc
+
+
+def burned_share_encoder():
+    """Share of the pixel's area that burned (0-1; -1 = outside) -> stepped ramp; 0 transparent.
+    The top step is the colour of a fully burned pixel, i.e. of every burned cell at full zoom."""
+    hex2rgb = lambda h: tuple(int(h.lstrip("#")[i:i + 2], 16) for i in (0, 2, 4))
+    lut = np.zeros((len(BURNED_COLORS) + 1, 4), "u1")
+    for i, c in enumerate(BURNED_COLORS, start=1):
+        lut[i] = hex2rgb(c) + (235,)
+
+    def enc(data):
+        s = data[0]
+        k = np.where(s > 0, np.digitize(s, BURNED_BREAKS[:-1], right=True) + 1, 0)
+        rgba = lut[k]
         if not rgba[..., 3].any():
             return None
         return encode_png(rgba)
@@ -107,19 +129,21 @@ def burned(args, dept_geom):
             missing.append(y)
             continue
         nat = dest
+        # 0 = not burned, 1 = burned, 255 = outside the department: "outside" must not count as
+        # "not burned" in the averaged pyramid below
         clip = common.mask_to_department(clip_source(nat, f"burned_{y}", common.bbox()),
-                                         common.WORK / f"burned_{y}_dept.tif", nodata=0)
-        burned_km2[str(y)] = round(sum(common.class_areas_km2(clip, {"d": dept_geom})["d"].values()), 1)
+                                         common.WORK / f"burned_{y}_dept255.tif", nodata=255)
+        burned_km2[str(y)] = round(common.class_areas_km2(clip, {"d": dept_geom})["d"].get(1, 0.0), 1)
         out = common.DATA / "tiles" / f"burned_{y}.pmtiles"
         if out.exists() and not args.force:
             continue
-        merc = warp_to_mercator(clip, f"burned_{y}_{common.AREA}", 12, Resampling.nearest,
-                                dtype="uint8", nodata=0, ovr=Resampling.nearest)
-        colormap = np.zeros((256, 4), "u1"); colormap[1] = (120, 32, 18, 235)
-        enc = lambda data: (None if not colormap[np.clip(data[0], 0, 1)][..., 3].any()
-                            else encode_png(colormap[np.clip(data[0], 0, 1)]))
-        cut_tiles(merc, out, f"MapBiomas burned {y}", "png", common.CFG["tiles"]["minzoom"], 12,
-                  enc, Resampling.nearest)
+        # z12 (~30 m pixels): each pixel is one cell, 0 or 1. Overviews average the 0/1 cells in
+        # float32, so a zoomed-out pixel holds the share of its area that burned (integer averages
+        # would round small shares down to zero).
+        merc = warp_to_mercator(clip, f"burnedshare_{y}_{common.AREA}", BURNED_FULL_ZOOM, Resampling.nearest,
+                                dtype="float32", nodata=-1.0, src_nodata=255, ovr=Resampling.average)
+        cut_tiles(merc, out, f"MapBiomas burned {y}", "png", common.CFG["tiles"]["minzoom"], BURNED_FULL_ZOOM,
+                  burned_share_encoder(), Resampling.nearest)
         common.record("24_fires", out)
     if missing:
         log.warning("MapBiomas burned rasters missing for %s (the published GCS links answer 403, "
@@ -165,12 +189,14 @@ def main():
             "urls": {"tiles": {y: f"tiles/burned_{y}.pmtiles" for y in burned_km2}},
             "years": [int(y) for y in burned_km2],
             "source": "MapBiomas Perú Fuego Collection 2 annual burned area (GEE export), 30 m, department clip",
-            "period": "2013-2024", "units": "burned at least once in the year",
+            "period": "2013-2024", "units": "burned at least once in the year; zoomed out, share of the pixel's area that burned",
+            "full_res_from_zoom": BURNED_FULL_ZOOM,
+            "legend_steps": {"breaks_pct": [round(b * 100) for b in BURNED_BREAKS], "colors": BURNED_COLORS},
             "licence": "CC BY 4.0 (MapBiomas: public, open and free use, subject to citation)",
             "citation": "MapBiomas Perú - Colección 2 de fuego (peru.mapbiomas.org)",
-            "caveats": "Landsat-based: misses small or low-severity burns. Zoomed out, each pixel "
-                       "samples one 30 m cell, so burned area keeps its true share and small burns "
-                       "appear only when zoomed in. Burned km² per year is this app's analysis."})
+            "caveats": "Landsat-based: misses small or low-severity burns. Zoomed out, each pixel shows "
+                       "the share of its area that burned; from zoom 12 each 30 m cell is shown as "
+                       "burned or not. Burned km² per year is this app's analysis."})
 
 
 if __name__ == "__main__":

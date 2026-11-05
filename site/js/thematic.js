@@ -223,9 +223,14 @@ function renderLegend() {
       (lg.colors || []).map((c, i) => [c, `≤ ${lg.breaks[i]} fires/km²`]),
       "VIIRS 375 m, confidence nominal/high · points from zoom 10");
   } else if (state.active === "burned_area") {
-    legendBox(`Burned at least once in ${y}`, [["rgb(120,32,18)", "burned (MapBiomas Fuego C2, 30 m)"]],
-      "CC BY 4.0 · Landsat-based; misses small or low-severity burns · zoomed out, each pixel samples "
-      + "one 30 m cell, so small burns appear only when zoomed in");
+    const st = reg.legend_steps || { breaks_pct: [], colors: [] };
+    const lo = (i) => (i ? st.breaks_pct[i - 1] : 0);
+    legendBox(`Burned area ${y} — share of area burned`,
+      st.colors.map((c, i) => [c, i === 0 ? `up to ${st.breaks_pct[0]} %`
+        : i === st.colors.length - 1 ? `more than ${lo(i)} %` : `${lo(i)}–${st.breaks_pct[i]} %`]),
+      `MapBiomas Fuego C2 · CC BY 4.0 · zoomed out, each pixel shows the share of its area that burned; `
+      + `from zoom ${reg.full_res_from_zoom ?? 12} each 30 m cell is shown burned (darkest colour) or not · `
+      + "Landsat-based: misses small or low-severity burns");
   }
 }
 

@@ -60,6 +60,8 @@
       "source": { "kind": "study", "citation": "Gobierno Regional de Ucayali (2022), as cited in Cooley et al. (2024)", "page": "p.18" } },
     { "value": "17,468", "label": "VIIRS active-fire detections in the department in 2024 — the highest in the VIIRS record (2012–2025)",
       "source": { "kind": "app", "method": "NASA FIRMS VIIRS S-NPP, confidence nominal/high, inside the department boundary" } },
+    { "value": "786 km²", "label": "MapBiomas burned area (Fuego Collection 2) also peaks in 2024, 786 km², the largest of 2013–2024, matching the VIIRS detections; this app's analysis.",
+      "source": { "kind": "app", "method": "MapBiomas Perú Fuego Collection 2 annual burned area, 30 m, cells inside the department" } },
     { "value": "1,686 mm", "label": "department rainfall in 2024 — the lowest annual total of 1981–2025 (normal 1991–2020 ≈ 2,150 mm)",
       "source": { "kind": "app", "method": "CHIRPS v3.0 annual totals, department land cells; rank among 45 complete years" } },
     { "value": "−1.89", "label": "department-mean SPI-3 for Jun–Aug 2024 (severely dry, WMO 2012) — the 3rd lowest since 1981, after 2023 (−2.23) and 1988 (−1.91). The data show co-occurrence, not cause.",
@@ -67,7 +69,7 @@
    ],
    "sources": [
     "GEOBOSQUES (MINAM PNCBMCC + SERFOR/MIDAGRI), 'Mapa del Bosque Húmedo Amazónico Peruano 2000–2024'; loss integrates natural and anthropic losses (product metadata, PRECAUCIONES).",
-    "Fire and drought numbers: this app's analysis of NASA FIRMS VIIRS (2012–2025) and CHIRPS v3.0 (1981–2025); they show co-occurrence in 2024, not cause.",
+    "Fire, burned-area and drought numbers: this app's analysis of NASA FIRMS VIIRS (2012–2025), MapBiomas Fuego Collection 2 (2013–2024) and CHIRPS v3.0 (1981–2025); they show co-occurrence in 2024, not cause.",
     "At-risk share: Ucayali Regional Strategy for Low Emissions Rural Development, as cited in Cooley et al. (2024), p.18."
    ]
   },

@@ -506,10 +506,29 @@
    ],
    "source": "MapBiomas Per\u00fa Fuego Collection 2 annual burned area (GEE export), 30 m, department clip",
    "period": "2013-2024",
-   "units": "burned at least once in the year",
+   "units": "burned at least once in the year; zoomed out, share of the pixel's area that burned",
+   "full_res_from_zoom": 12,
+   "legend_steps": {
+    "breaks_pct": [
+     2,
+     5,
+     15,
+     35,
+     75,
+     100
+    ],
+    "colors": [
+     "#fbe3c8",
+     "#f6b98a",
+     "#ec8a55",
+     "#d4562f",
+     "#a8301c",
+     "#782012"
+    ]
+   },
    "licence": "CC BY 4.0 (MapBiomas: public, open and free use, subject to citation)",
    "citation": "MapBiomas Per\u00fa - Colecci\u00f3n 2 de fuego (peru.mapbiomas.org)",
-   "caveats": "Landsat-based: misses small or low-severity burns. Zoomed out, each pixel samples one 30 m cell, so burned area keeps its true share and small burns appear only when zoomed in. Burned km\u00b2 per year is this app's analysis."
+   "caveats": "Landsat-based: misses small or low-severity burns. Zoomed out, each pixel shows the share of its area that burned; from zoom 12 each 30 m cell is shown as burned or not. Burned km\u00b2 per year is this app's analysis."
   }
  ]
 }

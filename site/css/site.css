@@ -90,9 +90,9 @@ body { font: 400 var(--fs-body)/1.45 var(--font); color: var(--text); background
 .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-card);
          box-shadow: var(--mosaic-shadow-card); }
 .legend { position: absolute; right: 12px; bottom: 34px; padding: 10px 12px; max-width: 240px; font-size: 12px; }
-@media (max-width: 1150px) {
-  .timebar:not([hidden]) ~ .legend { bottom: 150px; }     /* never under the time bar */
-}
+/* a visible time bar lifts the legend above it by the bar's measured height (app.js sets --timebar-h;
+   the bar wraps to two rows for climate), so the two never overlap at any width */
+body:has(#timebar:not([hidden])) .legend { bottom: calc(34px + var(--timebar-h, 52px) + 10px); }
 .legend h3 { margin: 0 0 6px; font-size: 12px; font-weight: 500; }
 .legend .seg { margin: 0 0 6px; }
 .legend .seg button { padding: 3px 9px; font-size: 12px; }
@@ -187,7 +187,7 @@ body { font: 400 var(--fs-body)/1.45 var(--font); color: var(--text); background
 #timeLabel strong { color: var(--text); font-weight: 600; }
 @media (max-width: 900px) {
   .timebar { left: 16px; right: 16px; transform: none; max-width: none; bottom: 12px; gap: 8px; }
-  .legend { bottom: 92px; }
+  body:has(#timebar:not([hidden])) .legend { bottom: calc(12px + var(--timebar-h, 52px) + 8px); }
   .yearbox input { width: 130px; flex: 1; }
 }
 
@@ -290,7 +290,7 @@ body { font: 400 var(--fs-body)/1.45 var(--font); color: var(--text); background
   body.story-open .legend { right: 424px; }
   body.story-open .timebar { left: calc(50% - 212px); max-width: calc(100% - 700px); }
   /* the climate/land time bar and the legend share the map's foot: stack them */
-  body.story-open:has(#timebar:not([hidden])) .legend { bottom: 150px; }
+  body.story-open:has(#timebar:not([hidden])) .legend { bottom: calc(34px + var(--timebar-h, 52px) + 10px); }
 }
 @media (max-width: 900px) {
   /* bottom sheet: map keeps the top half, the story scrolls in the sheet */

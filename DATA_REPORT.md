@@ -150,11 +150,17 @@ the papers.
 - **MapBiomas burned area, built 2026-11-04 (this app's analysis of MapBiomas Fuego C2).**
   Burned at least once in the year, department, km² (`series/fire.json`): 2013 424.5 · 2014
   446.5 · 2015 451.2 · 2016 512.4 · 2017 515.8 · 2018 332.2 · 2019 460.7 · 2020 549.9 · 2021
-  660.3 · 2022 549.5 · 2023 760.3 · **2024 786.3** (the largest in the series). Tiles use
-  **nearest-sampled overviews** (as for GEOBOSQUES and MapBiomas land cover): zoomed out, burned
-  pixels keep their true share, so small burns appear only when zoomed in; the earlier max
-  pyramid would have coloured a zoomed-out pixel if any 30 m cell under it burned. Tiles
-  0.7–1.0 MB per year.
+  660.3 · 2022 549.5 · 2023 760.3 · **2024 786.3** (the largest in the series).
+  **Display (revised 2026-11-04):** at z12 (~30 m pixels) each pixel is one cell, burned or not,
+  in the darkest colour; zoomed out, each pixel shows the **share of its area that burned**
+  (float average of the 0/1 cells; cells outside the department are a separate nodata value so
+  they do not count as unburned), on a six-step ramp (up to 2 %, 2–5, 5–15, 15–35, 35–75, more
+  than 75 %). Sampling one 30 m cell per pixel, the first build, left the layer looking almost
+  empty at department zoom (< 1 % of the area as scattered single pixels). Check (this app's
+  analysis): mean burned share of the department pixels at zoom 6 / 7 / 8 against the true share
+  (burned km² ÷ 105,780 km²) — 2024: true 0.743 %, map 0.720 / 0.733 / 0.736 %; 2019: 0.436 %,
+  0.423 / 0.429 / 0.431 %; 2013: 0.401 %, 0.391 / 0.395 / 0.397 % (the small shortfall at the
+  coarsest zoom comes from pixels straddling the department edge). Tiles 1.1–1.6 MB per year.
 - **Active-fire points in tilted views (fixed 2026-11-04).** The points were hidden below zoom
   10 by a layer minzoom; in a pitched view the far tiles load one zoom lower, so the far half
   of the view lost its points (39 of ~900 drawn in a test view). They are now hidden by a
